@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\KategoriPengaduan;
 use App\Models\Pengaduan;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PengaduanController extends Controller
 {
@@ -32,9 +34,8 @@ class PengaduanController extends Controller
             'deskripsi'  => ['required', 'string', 'min:20'],
 
             'lokasi_kejadian' => ['nullable', 'string'],
-            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'], // 5MB, khusus jpg/jpeg/png
+            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'], // 5MB
         ], [
-            // Pesan custom biar konsisten dengan pesan di frontend
             'nama_pelapor.required' => 'Nama lengkap wajib diisi.',
             'nama_pelapor.min' => 'Nama minimal 3 karakter.',
             'nama_pelapor.regex' => 'Nama hanya boleh berisi huruf.',
@@ -66,5 +67,37 @@ class PengaduanController extends Controller
         // lewat event `created` di Model Pengaduan.
 
         return redirect('/pengaduan/buat')->with('success', $pengaduan->kode_pengaduan);
+    }
+
+    // Generate & download surat pengaduan dalam bentuk PDF
+    public function surat(string $kode)
+    {
+        $pengaduan = Pengaduan::with('kategori')
+            ->where('kode_pengaduan', $kode)
+            ->firstOrFail();
+
+        // Format tanggal ke Bahasa Indonesia (tanpa perlu extension locale khusus)
+        $bulanIndo = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+        $tanggal = $pengaduan->created_at;
+        $tanggalIndo = $tanggal->day . ' ' . $bulanIndo[$tanggal->month] . ' ' . $tanggal->year;
+
+        // QR code mengarah ke halaman lacak pengaduan
+        // Pakai format SVG (bukan PNG) supaya tidak butuh extension Imagick di server
+        $urlLacak = url('/lacak?kode=' . $pengaduan->kode_pengaduan);
+        $qrCodeBase64 = base64_encode(
+            QrCode::format('svg')->size(200)->margin(1)->generate($urlLacak)
+        );
+
+        $pdf = Pdf::loadView('pengaduan.surat-pdf', [
+            'pengaduan' => $pengaduan,
+            'tanggalIndo' => $tanggalIndo,
+            'qrCodeBase64' => $qrCodeBase64,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('Surat-Pengaduan-' . $pengaduan->kode_pengaduan . '.pdf');
     }
 }

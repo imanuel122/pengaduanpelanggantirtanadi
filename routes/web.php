@@ -8,6 +8,7 @@ Route::get('/', [HomeController::class, 'index']);
 
 Route::get('/pengaduan/buat', [PengaduanController::class, 'create']);
 Route::post('/pengaduan', [PengaduanController::class, 'store']);
+Route::get('/pengaduan/{kode}/surat', [PengaduanController::class, 'surat']);
 
 Route::get('/lacak', function () {
     return 'Halaman Lacak Pengaduan — segera dibuat';
