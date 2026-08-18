@@ -18,7 +18,6 @@ class Pengaduan extends Model
         'judul',
         'deskripsi',
         'lokasi_kejadian',
-        'foto',
         'petugas_id',
         'status',
         'catatan_admin',
@@ -69,6 +68,11 @@ class Pengaduan extends Model
     public function tanggapans()
     {
         return $this->hasMany(TanggapanPengaduan::class)->orderBy('created_at');
+    }
+
+    public function fotos()
+    {
+        return $this->hasMany(PengaduanFoto::class);
     }
 
     public function statusLabel(): string

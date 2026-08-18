@@ -23,8 +23,8 @@
         <nav class="hidden lg:flex items-center gap-9 font-medium text-sm">
             <a href="/#beranda" :class="activeSection === 'beranda' ? 'text-brand-blue font-semibold' : 'text-slate-500 hover:text-brand-blue'" class="transition">Beranda</a>
             <a href="/#layanan" :class="activeSection === 'layanan' ? 'text-brand-blue font-semibold' : 'text-slate-500 hover:text-brand-blue'" class="transition">Layanan</a>
-            <a href="/#alur" :class="activeSection === 'alur' ? 'text-brand-blue font-semibold' : 'text-slate-500 hover:text-brand-blue'" class="transition">Alur Pengaduan</a>
             <a href="/#tentang" :class="activeSection === 'tentang' ? 'text-brand-blue font-semibold' : 'text-slate-500 hover:text-brand-blue'" class="transition">Tentang</a>
+            <a href="/#alur" :class="activeSection === 'alur' ? 'text-brand-blue font-semibold' : 'text-slate-500 hover:text-brand-blue'" class="transition">Alur Pengaduan</a>
         </nav>
 
         <div class="flex items-center gap-2 sm:gap-3">

@@ -34,7 +34,10 @@ class PengaduanController extends Controller
             'deskripsi'  => ['required', 'string', 'min:20'],
 
             'lokasi_kejadian' => ['nullable', 'string'],
-            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'], // 5MB
+
+            // Sekarang bisa banyak foto sekaligus
+            'foto'   => ['nullable', 'array', 'max:6'],
+            'foto.*' => ['image', 'mimes:jpg,jpeg,png', 'max:5120'], // masing-masing maks 5MB
         ], [
             'nama_pelapor.required' => 'Nama lengkap wajib diisi.',
             'nama_pelapor.min' => 'Nama minimal 3 karakter.',
@@ -51,17 +54,24 @@ class PengaduanController extends Controller
             'judul.min' => 'Judul minimal 5 karakter.',
             'deskripsi.required' => 'Deskripsi wajib diisi.',
             'deskripsi.min' => 'Ceritakan lebih detail lagi, minimal 20 karakter.',
-            'foto.image' => 'File yang diunggah harus berupa gambar.',
-            'foto.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
-            'foto.max' => 'Ukuran foto maksimal 5MB.',
+            'foto.max' => 'Maksimal 6 foto yang bisa diunggah.',
+            'foto.*.image' => 'File yang diunggah harus berupa gambar.',
+            'foto.*.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
+            'foto.*.max' => 'Ukuran tiap foto maksimal 5MB.',
         ]);
 
-        if ($request->hasFile('foto')) {
-            // Pastikan sudah jalankan: php artisan storage:link
-            $validated['foto'] = $request->file('foto')->store('pengaduan', 'public');
-        }
+        // Pisahkan data foto dari data yang mau disimpan ke tabel pengaduans
+        $fotoFiles = $validated['foto'] ?? [];
+        unset($validated['foto']);
 
         $pengaduan = Pengaduan::create($validated);
+
+        // Simpan tiap foto ke tabel pengaduan_fotos
+        // Pastikan sudah jalankan: php artisan storage:link
+        foreach ($fotoFiles as $file) {
+            $path = $file->store('pengaduan', 'public');
+            $pengaduan->fotos()->create(['path' => $path]);
+        }
 
         // TanggapanPengaduan "Pengaduan berhasil dikirim" otomatis dibuat
         // lewat event `created` di Model Pengaduan.
@@ -69,10 +79,10 @@ class PengaduanController extends Controller
         return redirect('/pengaduan/buat')->with('success', $pengaduan->kode_pengaduan);
     }
 
-    // Generate & download surat pengaduan dalam bentuk PDF
+    // Tampilkan (preview) surat pengaduan dalam bentuk PDF
     public function surat(string $kode)
     {
-        $pengaduan = Pengaduan::with('kategori')
+        $pengaduan = Pengaduan::with(['kategori', 'fotos'])
             ->where('kode_pengaduan', $kode)
             ->firstOrFail();
 
@@ -85,19 +95,25 @@ class PengaduanController extends Controller
         $tanggal = $pengaduan->created_at;
         $tanggalIndo = $tanggal->day . ' ' . $bulanIndo[$tanggal->month] . ' ' . $tanggal->year;
 
-        // QR code mengarah ke halaman lacak pengaduan
-        // Pakai format SVG (bukan PNG) supaya tidak butuh extension Imagick di server
-        $urlLacak = url('/lacak?kode=' . $pengaduan->kode_pengaduan);
-        $qrCodeBase64 = base64_encode(
-            QrCode::format('svg')->size(200)->margin(1)->generate($urlLacak)
+        // QR 1: melacak status pengaduan
+        $qrLacakBase64 = base64_encode(
+            QrCode::format('svg')->size(180)->margin(1)
+                ->generate(url('/lacak?kode=' . $pengaduan->kode_pengaduan))
+        );
+
+        // QR 2: melihat/cetak ulang surat ini
+        $qrSuratBase64 = base64_encode(
+            QrCode::format('svg')->size(180)->margin(1)
+                ->generate(url('/pengaduan/' . $pengaduan->kode_pengaduan . '/surat'))
         );
 
         $pdf = Pdf::loadView('pengaduan.surat-pdf', [
             'pengaduan' => $pengaduan,
             'tanggalIndo' => $tanggalIndo,
-            'qrCodeBase64' => $qrCodeBase64,
+            'qrLacakBase64' => $qrLacakBase64,
+            'qrSuratBase64' => $qrSuratBase64,
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->download('Surat-Pengaduan-' . $pengaduan->kode_pengaduan . '.pdf');
+        return $pdf->stream('Surat-Pengaduan-' . $pengaduan->kode_pengaduan . '.pdf');
     }
 }

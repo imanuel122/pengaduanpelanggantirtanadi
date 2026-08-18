@@ -259,45 +259,41 @@
 
                         <div>
                             <label class="block text-sm font-medium text-ink mb-1.5">
-                                Foto Bukti <span class="text-slate-400 font-normal text-xs">— opsional</span>
+                                Foto Bukti <span class="text-slate-400 font-normal text-xs">— opsional, bisa lebih dari 1</span>
                             </label>
 
                             <div class="border-2 border-dashed rounded-2xl p-6 sm:p-8 text-center transition-colors"
                                  :class="errors.foto ? 'border-red-300 bg-red-50' : (dragging ? 'border-brand-blue bg-brand-blue/5' : 'border-slate-200')"
                                  @dragover.prevent="dragging = true"
                                  @dragleave.prevent="dragging = false"
-                                 @drop.prevent="dragging = false;
-                                                $refs.fotoInput.files = $event.dataTransfer.files;
-                                                handleFoto($event.dataTransfer.files[0])">
+                                 @drop.prevent="dragging = false; handleFoto($event.dataTransfer.files)">
 
-                                <template x-if="!fotoPreview">
-                                    <div>
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" class="mx-auto mb-3"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
-                                        <p class="text-sm text-slate-500">Tarik & lepas foto di sini, atau</p>
-                                        <button type="button" @click="$refs.fotoInput.click()"
-                                                class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-brand-blue border border-brand-blue/30 rounded-full px-5 py-2 hover:bg-brand-blue/5 transition">
-                                            Pilih File
-                                        </button>
-                                        <p class="text-xs text-slate-400 mt-3">JPG, JPEG, atau PNG — maksimal 5MB</p>
-                                    </div>
-                                </template>
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" class="mx-auto mb-3"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                                <p class="text-sm text-slate-500">Tarik & lepas beberapa foto di sini, atau</p>
+                                <button type="button" @click="$refs.fotoInput.click()"
+                                        class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-brand-blue border border-brand-blue/30 rounded-full px-5 py-2 hover:bg-brand-blue/5 transition">
+                                    Pilih File
+                                </button>
+                                <p class="text-xs text-slate-400 mt-3">JPG, JPEG, atau PNG — maksimal 5MB per foto, maks. 6 foto</p>
 
-                                <template x-if="fotoPreview">
-                                    <div class="relative inline-block">
-                                        <img :src="fotoPreview" class="max-h-48 rounded-xl mx-auto shadow-sm">
-                                        <button type="button"
-                                                @click="fotoPreview = null; fotoName = ''; $refs.fotoInput.value = ''; delete errors.foto"
-                                                class="absolute -top-2.5 -right-2.5 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-md hover:bg-red-600 transition">
-                                            ✕
-                                        </button>
-                                        <p class="text-xs text-slate-400 mt-2" x-text="fotoName"></p>
-                                    </div>
-                                </template>
-
-                                <input type="file" name="foto" x-ref="fotoInput" accept="image/jpeg,image/jpg,image/png" class="hidden"
-                                       @change="handleFoto($event.target.files[0])">
+                                <input type="file" name="foto[]" x-ref="fotoInput" accept="image/jpeg,image/jpg,image/png" multiple class="hidden"
+                                       @change="handleFoto($event.target.files)">
                             </div>
                             <p x-show="errors.foto" x-text="errors.foto" class="text-red-500 text-xs mt-2" style="display:none"></p>
+
+                            {{-- Grid preview foto yang sudah dipilih --}}
+                            <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4" x-show="fotoFiles.length > 0">
+                                <template x-for="(item, index) in fotoFiles" :key="index">
+                                    <div class="relative">
+                                        <img :src="item.previewUrl" class="w-full h-20 sm:h-24 object-cover rounded-xl border border-slate-200">
+                                        <button type="button" @click="removeFoto(index)"
+                                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-md hover:bg-red-600 transition">
+                                            ✕
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2" x-show="fotoFiles.length > 0" x-text="`${fotoFiles.length} foto dipilih`"></p>
                         </div>
                     </div>
                 </div>
@@ -342,11 +338,15 @@
                                 <dt class="text-slate-400 text-xs">Detail Lokasi Kejadian</dt>
                                 <dd class="text-ink font-medium" x-text="form.lokasi_kejadian || 'Tidak diisi'"></dd>
                             </dl>
-                            <div x-show="fotoPreview">
-                                <p class="text-slate-400 text-xs mb-2">Foto Bukti</p>
-                                <img :src="fotoPreview" class="max-h-40 rounded-xl shadow-sm">
+                            <div x-show="fotoFiles.length > 0">
+                                <p class="text-slate-400 text-xs mb-2">Foto Bukti (<span x-text="fotoFiles.length"></span>)</p>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <template x-for="(item, index) in fotoFiles" :key="index">
+                                        <img :src="item.previewUrl" class="w-full h-16 object-cover rounded-lg shadow-sm">
+                                    </template>
+                                </div>
                             </div>
-                            <p x-show="!fotoPreview" class="text-slate-400 text-xs italic" style="display:none">Tidak ada foto dilampirkan</p>
+                            <p x-show="fotoFiles.length === 0" class="text-slate-400 text-xs italic" style="display:none">Tidak ada foto dilampirkan</p>
                         </div>
 
                         <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-700 text-sm" x-show="!isFormValid" style="display:none">
@@ -392,8 +392,7 @@ function pengaduanForm() {
     return {
         currentStep: 1,
         dragging: false,
-        fotoPreview: null,
-        fotoName: '',
+        fotoFiles: [], // { file, previewUrl, name }
         konfirmasi: false,
         categoryLabel: @js(old('kategori_pengaduan_id') && isset($kategoris) ? optional($kategoris->firstWhere('id', (int) old('kategori_pengaduan_id')))->nama : ''),
 
@@ -475,31 +474,57 @@ function pengaduanForm() {
             return true;
         },
 
-        validateFoto(file) {
-            delete this.errors.foto;
-            if (!file) return true;
+        validateFotoFile(file) {
             const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
             if (!allowed.includes(file.type)) {
-                this.errors.foto = 'File harus berformat JPG, JPEG, atau PNG.';
+                this.errors.foto = 'Semua file harus berformat JPG, JPEG, atau PNG.';
                 return false;
             }
             if (file.size > 5 * 1024 * 1024) {
-                this.errors.foto = 'Ukuran file maksimal 5MB.';
+                this.errors.foto = 'Ukuran tiap foto maksimal 5MB.';
                 return false;
             }
             return true;
         },
 
-        handleFoto(file) {
-            if (!file) { this.fotoPreview = null; this.fotoName = ''; return; }
-            if (this.validateFoto(file)) {
-                this.fotoPreview = URL.createObjectURL(file);
-                this.fotoName = file.name;
-            } else {
-                this.fotoPreview = null;
-                this.fotoName = '';
-                this.$refs.fotoInput.value = '';
+        handleFoto(fileList) {
+            const filesArray = Array.from(fileList || []);
+            if (filesArray.length === 0) return;
+
+            if (this.fotoFiles.length + filesArray.length > 6) {
+                this.errors.foto = 'Maksimal 6 foto yang bisa diunggah.';
+                return;
             }
+
+            let adaError = false;
+            filesArray.forEach((file) => {
+                if (this.validateFotoFile(file)) {
+                    this.fotoFiles.push({
+                        file: file,
+                        previewUrl: URL.createObjectURL(file),
+                        name: file.name,
+                    });
+                } else {
+                    adaError = true;
+                }
+            });
+            if (!adaError) delete this.errors.foto;
+
+            this.syncFotoInput();
+        },
+
+        removeFoto(index) {
+            this.fotoFiles.splice(index, 1);
+            delete this.errors.foto;
+            this.syncFotoInput();
+        },
+
+        // Gabungkan ulang semua File object ke input[type=file] pakai DataTransfer,
+        // supaya form submit tetap membawa SEMUA foto yang sudah dipilih/di-drag bertahap.
+        syncFotoInput() {
+            const dataTransfer = new DataTransfer();
+            this.fotoFiles.forEach((item) => dataTransfer.items.add(item.file));
+            this.$refs.fotoInput.files = dataTransfer.files;
         },
 
         // Validasi 1 langkah. markTouched=true dipakai saat klik "Lanjut"/submit,
