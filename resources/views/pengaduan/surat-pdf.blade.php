@@ -22,7 +22,7 @@
         | HAL SURAT
         |--------------------------------------------------------------------------
         */
-        $halSurat = 'Pengaduan ' . $kategori . ' – ' . $judul;
+        $halSurat = 'Pengaduan ' . $kategori;
 
         /*
         |--------------------------------------------------------------------------
@@ -65,6 +65,21 @@
         } else {
             $kalimatStatus = 'Pengaduan tersebut akan ditindaklanjuti oleh petugas terkait sesuai dengan prosedur dan ketentuan yang berlaku.';
         }
+        /*
+        |--------------------------------------------------------------------------
+        | HITUNG LAMPIRAN
+        |--------------------------------------------------------------------------
+        | Lampiran dihitung LEMBAR/HALAMAN (konvensi surat resmi), bukan jumlah foto.
+        | $fotoPerHalamanLampiran = kapasitas foto per halaman lampiran (2 kolom x 3 baris
+        | terbukti muat nyaman di 1 halaman A4). Angka ini dipakai lagi di bagian
+        | render lampiran di bawah, supaya jumlah "lembar" yang ditulis di surat
+        | SELALU sama persis dengan jumlah halaman yang benar-benar tercetak
+        | (halamannya dipecah manual pakai chunk(), bukan mengalir otomatis).
+        |--------------------------------------------------------------------------
+        */
+        $jumlahFoto = $pengaduan->fotos->count();
+        $fotoPerHalamanLampiran = 6;
+        $jumlahLembarLampiran = $jumlahFoto > 0 ? (int) ceil($jumlahFoto / $fotoPerHalamanLampiran) : 0;
     @endphp
 
     <title>Surat Pengaduan {{ $pengaduan->kode_pengaduan }}</title>
@@ -219,7 +234,13 @@
         </tr>
         <tr>
             <td class="label">Lampiran</td><td class="colon">:</td>
-            <td>{{ $pengaduan->fotos->count() > 0 ? $pengaduan->fotos->count() . ' berkas foto' : '-' }}</td>
+            <td>
+                @if ($jumlahLembarLampiran > 0)
+                    {{ $jumlahLembarLampiran }} lembar ({{ $jumlahFoto }} foto)
+                @else
+                    -
+                @endif
+            </td>
         </tr>
         <tr>
             <td class="label">Hal</td><td class="colon">:</td>
@@ -241,10 +262,10 @@
     <p class="isi">Dengan hormat,</p>
 
     <p class="isi">
-        Menanggapi pengaduan yang telah disampaikan oleh Bapak/Ibu <strong>{{ $pengaduan->nama_pelapor }}</strong>
-        melalui sistem pengaduan online <strong>PERUMDA Tirtanadi Cabang Padang Bulan</strong>,
-        bersama ini kami sampaikan bahwa pengaduan mengenai <strong>{{ $kategori }}</strong>
-        dengan judul <strong>&ldquo;{{ $judul }}&rdquo;</strong> telah kami terima dan tercatat
+        Menanggapi pengaduan yang telah disampaikan oleh Bapak/Ibu {{ $pengaduan->nama_pelapor }}
+        melalui sistem pengaduan online PERUMDA Tirtanadi Cabang Padang Bulan,
+        bersama ini kami sampaikan bahwa pengaduan mengenai {{ $kategori }}
+        dengan judul &ldquo;{{ $judul }}&rdquo; telah kami terima dan tercatat
         dalam sistem pengaduan kami.
     </p>
 
@@ -336,38 +357,47 @@
     </div>
 
     {{-- ===== HALAMAN LAMPIRAN FOTO — HALAMAN BARU, TERPISAH DARI SURAT ===== --}}
-    @if ($pengaduan->fotos->count() > 0)
-        <div class="lampiran-page">
-            <div class="lampiran-kop">
-                <p class="lampiran-title">Lampiran Foto Pengaduan</p>
-                <p class="lampiran-sub">
-                    Melampiri Surat Nomor {{ $pengaduan->kode_pengaduan }} &mdash;
-                    {{ $pengaduan->fotos->count() }} foto dilampirkan
-                </p>
-            </div>
+    {{-- Dipecah manual per $fotoPerHalamanLampiran foto, supaya jumlah halaman yang
+         tercetak SELALU sama dengan $jumlahLembarLampiran yang ditulis di identitas surat. --}}
+    @if ($jumlahFoto > 0)
+        @php
+            $grupHalamanLampiran = $pengaduan->fotos->chunk($fotoPerHalamanLampiran);
+            $nomorFoto = 0;
+        @endphp
 
-            <table class="lampiran-grid">
-                @php $nomorFoto = 0; @endphp
-                @foreach ($pengaduan->fotos->chunk(2) as $baris)
-                    <tr>
-                        @foreach ($baris as $foto)
-                            @php $nomorFoto++; $fotoPath = storage_path('app/public/' . $foto->path); @endphp
-                            <td>
-                                <div class="lampiran-frame">
-                                    @if (file_exists($fotoPath))
-                                        <img src="{{ $fotoPath }}">
-                                    @endif
-                                    <div class="lampiran-caption">Foto {{ $nomorFoto }}</div>
-                                </div>
-                            </td>
-                        @endforeach
-                        @if ($baris->count() < 2)
-                            <td></td>
-                        @endif
-                    </tr>
-                @endforeach
-            </table>
-        </div>
+        @foreach ($grupHalamanLampiran as $halamanKe => $grupFoto)
+            <div class="lampiran-page">
+                <div class="lampiran-kop">
+                    <p class="lampiran-title">Lampiran Foto Pengaduan</p>
+                    <p class="lampiran-sub">
+                        Melampiri Surat Nomor {{ $pengaduan->kode_pengaduan }} &mdash;
+                        Lembar {{ $halamanKe + 1 }} dari {{ $jumlahLembarLampiran }}
+                        ({{ $jumlahFoto }} foto)
+                    </p>
+                </div>
+
+                <table class="lampiran-grid">
+                    @foreach ($grupFoto->chunk(2) as $baris)
+                        <tr>
+                            @foreach ($baris as $foto)
+                                @php $nomorFoto++; $fotoPath = storage_path('app/public/' . $foto->path); @endphp
+                                <td>
+                                    <div class="lampiran-frame">
+                                        @if (file_exists($fotoPath))
+                                            <img src="{{ $fotoPath }}">
+                                        @endif
+                                        <div class="lampiran-caption">Foto {{ $nomorFoto }}</div>
+                                    </div>
+                                </td>
+                            @endforeach
+                            @if ($baris->count() < 2)
+                                <td></td>
+                            @endif
+                        </tr>
+                    @endforeach
+                </table>
+            </div>
+        @endforeach
     @endif
 
 </body>

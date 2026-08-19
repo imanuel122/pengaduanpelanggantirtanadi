@@ -15,8 +15,8 @@
         <a href="/#beranda" class="flex items-center gap-2 sm:gap-3">
             <img src="{{ asset('images/logo/logo-pdam.jpg') }}" alt="Logo PDAM Tirtanadi" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover shrink-0 ring-1 ring-slate-100">
             <div class="leading-tight">
-                <p class="font-display font-bold text-sm sm:text-lg tracking-tight">TIRTANADI</p>
-                <p class="text-[10px] sm:text-xs text-slate-500 -mt-0.5">Sistem Pengaduan Pelanggan</p>
+                <p class="font-display font-bold text-sm sm:text-lg tracking-tight">PDAM TIRTANADI</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 -mt-0.5">Cabang Padang Bulan <br> Sistem Pengaduan Pelanggan</p>
             </div>
         </a>
 
