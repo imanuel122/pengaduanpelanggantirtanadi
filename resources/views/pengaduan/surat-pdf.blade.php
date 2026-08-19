@@ -22,7 +22,7 @@
         | HAL SURAT
         |--------------------------------------------------------------------------
         */
-        $halSurat = 'Pengaduan ' . $kategori;
+        $halSurat = 'Pengaduan ' . $kategori . ' – ' . $judul;
 
         /*
         |--------------------------------------------------------------------------
@@ -124,7 +124,7 @@
         .tujuan .nama { font-weight: bold; }
 
         /* ===== ISI SURAT ===== */
-        .isi { margin: 0 0 7px 0; text-align: justify; font-size: 10pt; line-height: 1.38; }
+        .isi { margin: 0 0 7px 0; text-align: justify; font-size: 10pt; line-height: 1.38; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; }
 
         /* ===== URAIAN / KUTIPAN DESKRIPSI ===== */
         .uraian {
@@ -135,15 +135,18 @@
             line-height: 1.38;
             text-align: justify;
             background-color: #F8FAFC;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         /* ===== RINCIAN PENGADUAN ===== */
         .judul-data { margin-top: 8px; margin-bottom: 4px; font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #0B6FB4; }
         .data { width: 100%; border-collapse: collapse; margin: 0 0 7px 0; }
-        .data td { padding: 2px 2px; vertical-align: top; font-size: 9.3pt; line-height: 1.25; }
+        .data td { padding: 2px 2px; vertical-align: top; font-size: 9.3pt; line-height: 1.25; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; }
         .data .label { width: 145px; }
         .data .colon { width: 13px; }
-        .data .value { text-align: left; font-weight: bold; }
+        .data .value { text-align: left; font-weight: bold; width: 320px; }
 
         /* ===== NOMOR PENGADUAN ===== */
         .nomor-box { width: 100%; border: 1px solid #0B6FB4; background-color: #F0F7FC; border-collapse: collapse; margin-top: 6px; margin-bottom: 7px; }
@@ -236,7 +239,7 @@
             <td class="label">Lampiran</td><td class="colon">:</td>
             <td>
                 @if ($jumlahLembarLampiran > 0)
-                    {{ $jumlahLembarLampiran }} lembar ({{ $jumlahFoto }} foto)
+                    {{ $jumlahLembarLampiran }} lembar foto ({{ $jumlahFoto }} foto)
                 @else
                     -
                 @endif

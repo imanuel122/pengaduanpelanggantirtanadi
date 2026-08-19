@@ -37,4 +37,17 @@ class TanggapanPengaduan extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Warna titik timeline di halaman Lacak Pengaduan, tergantung status_baru saat itu
+    public function dotColorClass(): string
+    {
+        return match ($this->status_baru) {
+            'baru' => 'bg-brand-blue',
+            'diverifikasi' => 'bg-amber-400',
+            'diproses' => 'bg-brand-teal',
+            'selesai' => 'bg-brand-green',
+            'ditolak' => 'bg-red-500',
+            default => 'bg-slate-300', // entri tanpa perubahan status, cuma komentar/tanggapan
+        };
+    }
 }

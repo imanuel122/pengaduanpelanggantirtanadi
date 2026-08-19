@@ -41,7 +41,7 @@
                 <p class="font-display font-bold text-xl sm:text-2xl text-brand-blue tracking-wide mt-1">{{ session('success') }}</p>
             </div>
 
-            <a href="/pengaduan/{{ session('success') }}/surat" class="inline-flex items-center justify-center gap-2 bg-brand-teal text-white font-semibold rounded-xl px-6 py-3 shadow-lg shadow-brand-teal/30 hover:opacity-90 transition text-sm mt-6">
+            <a href="/pengaduan/{{ session('success') }}/surat" target="_blank" class="inline-flex items-center justify-center gap-2 bg-brand-teal text-white font-semibold rounded-xl px-6 py-3 shadow-lg shadow-brand-teal/30 hover:opacity-90 transition text-sm mt-6">
                 🖨️ Cetak Surat Pengaduan (PDF)
             </a>
 
@@ -314,21 +314,21 @@
                         <div class="bg-slate-50 rounded-2xl p-4 sm:p-5">
                             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Data Diri</p>
                             <dl class="grid sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                                <div><dt class="text-slate-400 text-xs">Nama</dt><dd class="text-ink font-medium" x-text="form.nama_pelapor || 'Belum diisi'"></dd></div>
-                                <div><dt class="text-slate-400 text-xs">No. HP</dt><dd class="text-ink font-medium" x-text="form.no_hp || 'Belum diisi'"></dd></div>
-                                <div><dt class="text-slate-400 text-xs">NPA</dt><dd class="text-ink font-medium" x-text="form.no_pelanggan || 'Tidak diisi'"></dd></div>
-                                <div><dt class="text-slate-400 text-xs">Email</dt><dd class="text-ink font-medium" x-text="form.email || 'Tidak diisi'"></dd></div>
-                                <div class="sm:col-span-2"><dt class="text-slate-400 text-xs">Alamat</dt><dd class="text-ink font-medium" x-text="form.alamat || 'Belum diisi'"></dd></div>
-                                <div class="sm:col-span-2"><dt class="text-slate-400 text-xs">Patokan Rumah</dt><dd class="text-ink font-medium" x-text="form.no_rumah_patokan || 'Tidak diisi'"></dd></div>
+                                <div><dt class="text-slate-400 text-xs">Nama</dt><dd class="text-ink font-medium break-words" x-text="form.nama_pelapor || 'Belum diisi'"></dd></div>
+                                <div><dt class="text-slate-400 text-xs">No. HP</dt><dd class="text-ink font-medium break-words" x-text="form.no_hp || 'Belum diisi'"></dd></div>
+                                <div><dt class="text-slate-400 text-xs">NPA</dt><dd class="text-ink font-medium break-words" x-text="form.no_pelanggan || 'Tidak diisi'"></dd></div>
+                                <div><dt class="text-slate-400 text-xs">Email</dt><dd class="text-ink font-medium break-words" x-text="form.email || 'Tidak diisi'"></dd></div>
+                                <div class="sm:col-span-2"><dt class="text-slate-400 text-xs">Alamat</dt><dd class="text-ink font-medium break-words" x-text="form.alamat || 'Belum diisi'"></dd></div>
+                                <div class="sm:col-span-2"><dt class="text-slate-400 text-xs">Patokan Rumah</dt><dd class="text-ink font-medium break-words" x-text="form.no_rumah_patokan || 'Tidak diisi'"></dd></div>
                             </dl>
                         </div>
 
                         <div class="bg-slate-50 rounded-2xl p-4 sm:p-5">
                             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Detail Pengaduan</p>
                             <dl class="space-y-2 text-sm">
-                                <div><dt class="text-slate-400 text-xs">Kategori</dt><dd class="text-ink font-medium" x-text="categoryLabel || 'Belum dipilih'"></dd></div>
-                                <div><dt class="text-slate-400 text-xs">Judul</dt><dd class="text-ink font-medium" x-text="form.judul || 'Belum diisi'"></dd></div>
-                                <div><dt class="text-slate-400 text-xs">Deskripsi</dt><dd class="text-ink font-medium" x-text="form.deskripsi || 'Belum diisi'"></dd></div>
+                                <div><dt class="text-slate-400 text-xs">Kategori</dt><dd class="text-ink font-medium break-words" x-text="categoryLabel || 'Belum dipilih'"></dd></div>
+                                <div><dt class="text-slate-400 text-xs">Judul</dt><dd class="text-ink font-medium break-words" x-text="form.judul || 'Belum diisi'"></dd></div>
+                                <div><dt class="text-slate-400 text-xs">Deskripsi</dt><dd class="text-ink font-medium break-words" x-text="form.deskripsi || 'Belum diisi'"></dd></div>
                             </dl>
                         </div>
 
@@ -336,7 +336,7 @@
                             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Lokasi & Foto</p>
                             <dl class="text-sm mb-3">
                                 <dt class="text-slate-400 text-xs">Detail Lokasi Kejadian</dt>
-                                <dd class="text-ink font-medium" x-text="form.lokasi_kejadian || 'Tidak diisi'"></dd>
+                                <dd class="text-ink font-medium break-words" x-text="form.lokasi_kejadian || 'Tidak diisi'"></dd>
                             </dl>
                             <div x-show="fotoFiles.length > 0">
                                 <p class="text-slate-400 text-xs mb-2">Foto Bukti (<span x-text="fotoFiles.length"></span>)</p>

@@ -79,6 +79,26 @@ class PengaduanController extends Controller
         return redirect('/pengaduan/buat')->with('success', $pengaduan->kode_pengaduan);
     }
 
+    // Tampilkan halaman lacak pengaduan (dengan atau tanpa kode pencarian)
+    public function lacak(Request $request)
+    {
+        $kode = trim((string) $request->query('kode', ''));
+        $pengaduan = null;
+        $sudahDicari = $kode !== '';
+
+        if ($sudahDicari) {
+            $pengaduan = Pengaduan::with(['kategori', 'petugas', 'fotos', 'tanggapans'])
+                ->where('kode_pengaduan', $kode)
+                ->first();
+        }
+
+        return view('pengaduan.lacak', [
+            'pengaduan' => $pengaduan,
+            'kodeDicari' => $kode,
+            'sudahDicari' => $sudahDicari,
+        ]);
+    }
+
     // Tampilkan (preview) surat pengaduan dalam bentuk PDF
     public function surat(string $kode)
     {
