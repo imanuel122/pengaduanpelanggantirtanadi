@@ -12,6 +12,7 @@ class User extends Authenticatable
     // User = PEGAWAI (admin/petugas). Pelanggan tidak punya akun.
     protected $fillable = [
         'name',
+        'nipp',
         'email',
         'password',
         'phone',

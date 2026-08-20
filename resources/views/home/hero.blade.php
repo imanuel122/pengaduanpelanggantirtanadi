@@ -62,10 +62,15 @@
         <div x-data="{
                 active: 0,
                 slides: [
-                    { src: '/images/kegiatan/kegiatan-1.jpg', caption: 'Kunjungan lapangan tim teknis Padang Bulan' },
-                    { src: '/images/kegiatan/kegiatan-2.jpg', caption: 'Perbaikan jaringan pipa distribusi' },
-                    { src: '/images/kegiatan/kegiatan-3.jpg', caption: 'Sosialisasi layanan ke warga sekitar' },
-                    { src: '/images/kegiatan/kegiatan-4.jpg', caption: 'Pemeliharaan rutin meteran pelanggan' },
+                    { src: '/images/kegiatan/kegiatan-1.jpeg', caption: 'Kunjungan lapangan tim teknis Padang Bulan' },
+                    { src: '/images/kegiatan/kegiatan-2.jpeg', caption: 'Perbaikan jaringan pipa distribusi' },
+                    { src: '/images/kegiatan/kegiatan-3.jpeg', caption: 'Sosialisasi layanan ke warga sekitar' },
+                    { src: '/images/kegiatan/kegiatan-5.jpeg', caption: 'Pemeliharaan rutin meteran pelanggan' },
+                    { src: '/images/kegiatan/kegiatan-6.jpeg', caption: 'Pemeliharaan rutin meteran pelanggan' },
+                    { src: '/images/kegiatan/kegiatan-7.jpeg', caption: 'Pemeliharaan rutin meteran pelanggan' },
+                    { src: '/images/kegiatan/kegiatan-8.jpeg', caption: 'Pemeliharaan rutin meteran pelanggan' },
+                    { src: '/images/kegiatan/kegiatan-9.jpeg', caption: 'Pemeliharaan rutin meteran pelanggan' },
+                    { src: '/images/kegiatan/kegiatan-10.jpeg', caption: 'Pemeliharaan rutin meteran pelanggan' },
                 ],
                 init() { setInterval(() => { this.active = (this.active + 1) % this.slides.length }, 4000) }
              }" x-init="init()" class="relative rounded-3xl overflow-hidden shadow-2xl shadow-brand-blue/20 aspect-[4/3.3] sm:aspect-[4/3.1] border-4 border-white ring-1 ring-slate-100">

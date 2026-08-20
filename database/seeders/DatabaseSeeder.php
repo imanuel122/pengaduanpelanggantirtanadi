@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
         // Akun pegawai default (pelanggan tidak perlu akun)
         User::create([
             'name' => 'Admin PDAM Padang Bulan',
+            'nipp' => '19850101202201001',
             'email' => 'admin@pdamtirtanadi.test',
             'password' => Hash::make('password123'),
             'role' => 'admin',
@@ -21,6 +22,7 @@ class DatabaseSeeder extends Seeder
 
         User::create([
             'name' => 'Petugas Lapangan 1',
+            'nipp' => '19900202202201002',
             'email' => 'petugas@pdamtirtanadi.test',
             'password' => Hash::make('password123'),
             'role' => 'petugas',
