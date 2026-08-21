@@ -50,7 +50,7 @@ class PengaduanController extends Controller
     // Detail 1 pengaduan
     public function show(Pengaduan $pengaduan)
     {
-        $pengaduan->load(['kategori', 'petugas', 'fotos', 'tanggapans.user']);
+        $pengaduan->load(['kategori', 'petugas', 'fotos', 'tanggapans.user', 'tanggapans.fotos']);
         $petugasList = User::where('role', 'petugas')->orderBy('name')->get();
 
         return view('dashboard.pengaduan.show', compact('pengaduan', 'petugasList'));
@@ -61,27 +61,30 @@ class PengaduanController extends Controller
     {
         $validated = $request->validate([
             'pesan' => ['required', 'string', 'min:5'],
-            'status_baru' => ['nullable', 'in:baru,diverifikasi,diproses,selesai,ditolak'],
-            'foto_dokumentasi' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'status_baru' => ['nullable', 'in:baru,pengecekan,diverifikasi,diproses,selesai,ditolak'],
+            'foto_dokumentasi' => ['nullable', 'array', 'max:6'],
+            'foto_dokumentasi.*' => ['image', 'mimes:jpg,jpeg,png', 'max:5120'],
         ], [
             'pesan.required' => 'Isi tanggapan wajib diisi.',
             'pesan.min' => 'Tanggapan minimal 5 karakter.',
-            'foto_dokumentasi.image' => 'File harus berupa gambar.',
-            'foto_dokumentasi.mimes' => 'Foto harus JPG, JPEG, atau PNG.',
-            'foto_dokumentasi.max' => 'Ukuran foto maksimal 5MB.',
+            'foto_dokumentasi.max' => 'Maksimal 6 foto yang bisa diunggah.',
+            'foto_dokumentasi.*.image' => 'File yang diunggah harus berupa gambar.',
+            'foto_dokumentasi.*.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
+            'foto_dokumentasi.*.max' => 'Ukuran tiap foto maksimal 5MB.',
         ]);
 
-        $fotoPath = null;
-        if ($request->hasFile('foto_dokumentasi')) {
-            $fotoPath = $request->file('foto_dokumentasi')->store('dokumentasi', 'public');
-        }
+        $fotoFiles = $validated['foto_dokumentasi'] ?? [];
 
-        $pengaduan->tanggapans()->create([
+        $tanggapan = $pengaduan->tanggapans()->create([
             'user_id' => auth()->id(),
             'pesan' => $validated['pesan'],
             'status_baru' => $validated['status_baru'] ?? null,
-            'foto_dokumentasi' => $fotoPath,
         ]);
+
+        foreach ($fotoFiles as $file) {
+            $path = $file->store('dokumentasi', 'public');
+            $tanggapan->fotos()->create(['path' => $path]);
+        }
 
         if (!empty($validated['status_baru'])) {
             $pengaduan->update([

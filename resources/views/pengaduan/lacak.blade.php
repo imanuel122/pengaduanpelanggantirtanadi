@@ -118,7 +118,7 @@
                     </div>
                 @endif
 
-                <a href="/pengaduan/{{ $pengaduan->kode_pengaduan }}/surat" target="_blank" class="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-brand-teal border border-brand-teal/30 rounded-full px-5 py-2.5 hover:bg-brand-teal/5 transition">
+                <a href="/pengaduan/{{ $pengaduan->kode_pengaduan }}/surat" class="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-brand-teal border border-brand-teal/30 rounded-full px-5 py-2.5 hover:bg-brand-teal/5 transition">
                     🖨️ Lihat / Cetak Surat Pengaduan
                 </a>
             </div>
@@ -147,10 +147,14 @@
                                     <p class="text-xs text-slate-400 mt-1">oleh {{ $tanggapan->user->name }}</p>
                                 @endif
 
-                                @if ($tanggapan->foto_dokumentasi)
-                                    <a href="{{ asset('storage/' . $tanggapan->foto_dokumentasi) }}" target="_blank" class="inline-block mt-2">
-                                        <img src="{{ asset('storage/' . $tanggapan->foto_dokumentasi) }}" class="h-20 rounded-lg border border-slate-200 hover:opacity-80 transition">
-                                    </a>
+                                @if ($tanggapan->fotos->count() > 0)
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        @foreach ($tanggapan->fotos as $foto)
+                                            <a href="{{ $foto->url() }}" target="_blank">
+                                                <img src="{{ $foto->url() }}" class="h-20 w-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition">
+                                            </a>
+                                        @endforeach
+                                    </div>
                                 @endif
                             </div>
                         </div>

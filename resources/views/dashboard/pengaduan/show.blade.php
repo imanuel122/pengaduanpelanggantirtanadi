@@ -143,10 +143,14 @@
                                 @if ($tanggapan->user)
                                     <p class="text-xs text-slate-400 mt-1">oleh {{ $tanggapan->user->name }}</p>
                                 @endif
-                                @if ($tanggapan->foto_dokumentasi)
-                                    <a href="{{ asset('storage/' . $tanggapan->foto_dokumentasi) }}" target="_blank" class="inline-block mt-2">
-                                        <img src="{{ asset('storage/' . $tanggapan->foto_dokumentasi) }}" class="h-20 rounded-lg border border-slate-200 hover:opacity-80 transition">
-                                    </a>
+                                @if ($tanggapan->fotos->count() > 0)
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        @foreach ($tanggapan->fotos as $foto)
+                                            <a href="{{ $foto->url() }}" target="_blank">
+                                                <img src="{{ $foto->url() }}" class="h-20 w-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition">
+                                            </a>
+                                        @endforeach
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -186,7 +190,32 @@
             @endif
 
             {{-- Tambah tanggapan / ubah status --}}
-            <div class="bg-white rounded-2xl border border-slate-100 p-5">
+            <div class="bg-white rounded-2xl border border-slate-100 p-5"
+                 x-data="{
+                    dragging: false,
+                    fotoFiles: [],
+                    handleFoto(fileList) {
+                        const filesArray = Array.from(fileList || []);
+                        if (filesArray.length === 0) return;
+                        if (this.fotoFiles.length + filesArray.length > 6) {
+                            alert('Maksimal 6 foto yang bisa diunggah.');
+                            return;
+                        }
+                        filesArray.forEach((file) => {
+                            this.fotoFiles.push({ file: file, previewUrl: URL.createObjectURL(file), name: file.name });
+                        });
+                        this.syncFotoInput();
+                    },
+                    removeFoto(index) {
+                        this.fotoFiles.splice(index, 1);
+                        this.syncFotoInput();
+                    },
+                    syncFotoInput() {
+                        const dataTransfer = new DataTransfer();
+                        this.fotoFiles.forEach((item) => dataTransfer.items.add(item.file));
+                        this.$refs.fotoInput.files = dataTransfer.files;
+                    }
+                 }">
                 <p class="font-display font-semibold text-ink mb-1">Tambah Tanggapan</p>
                 <p class="text-xs text-slate-500 mb-4">Akan muncul di timeline & bisa dilihat pelanggan di halaman Lacak Pengaduan.</p>
 
@@ -205,19 +234,45 @@
                         <select name="status_baru" class="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition bg-white">
                             <option value="">Jangan ubah status</option>
                             <option value="baru" {{ $pengaduan->status === 'baru' ? 'selected' : '' }}>Baru</option>
+                            <option value="pengecekan" {{ $pengaduan->status === 'pengecekan' ? 'selected' : '' }}>Pengecekan</option>
                             <option value="diverifikasi" {{ $pengaduan->status === 'diverifikasi' ? 'selected' : '' }}>Diverifikasi</option>
                             <option value="diproses" {{ $pengaduan->status === 'diproses' ? 'selected' : '' }}>Diproses</option>
                             <option value="selesai" {{ $pengaduan->status === 'selesai' ? 'selected' : '' }}>Selesai</option>
                             <option value="ditolak" {{ $pengaduan->status === 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                         </select>
+                        <p class="text-[11px] text-slate-400 mt-1.5">Alur: Baru → Pengecekan → Diverifikasi/Ditolak → Diproses → Selesai</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-ink mb-1.5">
-                            Foto Dokumentasi <span class="text-slate-400 font-normal text-xs">— opsional</span>
+                            Foto Dokumentasi <span class="text-slate-400 font-normal text-xs">— opsional, bisa lebih dari 1</span>
                         </label>
-                        <input type="file" name="foto_dokumentasi" accept="image/jpeg,image/jpg,image/png"
-                               class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-blue/10 file:text-brand-blue file:text-xs file:font-semibold">
+
+                        <div class="border-2 border-dashed rounded-xl p-4 text-center transition-colors"
+                             :class="dragging ? 'border-brand-blue bg-brand-blue/5' : 'border-slate-200'"
+                             @dragover.prevent="dragging = true"
+                             @dragleave.prevent="dragging = false"
+                             @drop.prevent="dragging = false; handleFoto($event.dataTransfer.files)">
+                            <p class="text-xs text-slate-500">Tarik & lepas foto, atau</p>
+                            <button type="button" @click="$refs.fotoInput.click()"
+                                    class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue border border-brand-blue/30 rounded-full px-4 py-1.5 hover:bg-brand-blue/5 transition">
+                                Pilih File
+                            </button>
+                            <input type="file" name="foto_dokumentasi[]" x-ref="fotoInput" accept="image/jpeg,image/jpg,image/png" multiple class="hidden"
+                                   @change="handleFoto($event.target.files)">
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-2 mt-3" x-show="fotoFiles.length > 0">
+                            <template x-for="(item, index) in fotoFiles" :key="index">
+                                <div class="relative">
+                                    <img :src="item.previewUrl" class="w-full h-16 object-cover rounded-lg border border-slate-200">
+                                    <button type="button" @click="removeFoto(index)"
+                                            class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-md hover:bg-red-600 transition">
+                                        ✕
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     <button type="submit" class="w-full h-11 rounded-xl bg-brand-blue text-white font-semibold text-sm shadow-lg shadow-brand-blue/30 hover:bg-brand-bluelight transition">

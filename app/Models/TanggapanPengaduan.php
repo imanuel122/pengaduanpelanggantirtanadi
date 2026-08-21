@@ -13,7 +13,6 @@ class TanggapanPengaduan extends Model
         'user_id',
         'pesan',
         'status_baru',
-        'foto_dokumentasi',
     ];
 
     protected $casts = [
@@ -38,11 +37,17 @@ class TanggapanPengaduan extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function fotos()
+    {
+        return $this->hasMany(TanggapanFoto::class);
+    }
+
     // Warna titik timeline di halaman Lacak Pengaduan, tergantung status_baru saat itu
     public function dotColorClass(): string
     {
         return match ($this->status_baru) {
             'baru' => 'bg-brand-blue',
+            'pengecekan' => 'bg-violet-500',
             'diverifikasi' => 'bg-amber-400',
             'diproses' => 'bg-brand-teal',
             'selesai' => 'bg-brand-green',

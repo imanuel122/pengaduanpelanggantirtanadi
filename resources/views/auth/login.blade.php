@@ -44,9 +44,7 @@
 
         {{-- Logo & judul --}}
         <div class="text-center mb-6">
-            <div class="w-14 h-14 rounded-full brand-gradient flex items-center justify-center mx-auto mb-3">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12 2C12 2 5 11.5 5 16a7 7 0 0014 0C19 11.5 12 2 12 2z"/></svg>
-            </div>
+            <img src="{{ asset('images/logo/logo-pdam.jpg') }}" alt="Logo PDAM Tirtanadi" class="w-14 h-14 rounded-full object-cover mx-auto mb-3 ring-1 ring-slate-100">
             <p class="font-display font-bold text-lg text-ink">TIRTANADI</p>
             <p class="text-xs text-slate-500">Dashboard Pegawai &mdash; Cabang Padang Bulan</p>
         </div>

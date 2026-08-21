@@ -79,6 +79,7 @@ class Pengaduan extends Model
     {
         return match ($this->status) {
             'baru' => 'Baru',
+            'pengecekan' => 'Sedang Dicek',
             'diverifikasi' => 'Diverifikasi',
             'diproses' => 'Sedang Diproses',
             'selesai' => 'Selesai',
@@ -91,6 +92,7 @@ class Pengaduan extends Model
     {
         return match ($this->status) {
             'baru' => 'bg-blue-100 text-blue-700 border-blue-300',
+            'pengecekan' => 'bg-violet-100 text-violet-700 border-violet-300',
             'diverifikasi' => 'bg-yellow-100 text-yellow-700 border-yellow-300',
             'diproses' => 'bg-orange-100 text-orange-700 border-orange-300',
             'selesai' => 'bg-green-100 text-green-700 border-green-300',
@@ -144,6 +146,7 @@ class Pengaduan extends Model
     {
         return match ($this->status) {
             'baru' => '🟢',
+            'pengecekan' => '🟣',
             'diverifikasi' => '🟡',
             'diproses' => '🟠',
             'selesai' => '🟢',

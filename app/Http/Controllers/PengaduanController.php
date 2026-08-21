@@ -87,7 +87,7 @@ class PengaduanController extends Controller
         $sudahDicari = $kode !== '';
 
         if ($sudahDicari) {
-            $pengaduan = Pengaduan::with(['kategori', 'petugas', 'fotos', 'tanggapans'])
+            $pengaduan = Pengaduan::with(['kategori', 'petugas', 'fotos', 'tanggapans.fotos'])
                 ->where('kode_pengaduan', $kode)
                 ->first();
         }
