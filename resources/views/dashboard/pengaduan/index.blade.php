@@ -9,6 +9,7 @@
         $tabs = [
             'semua' => 'Semua',
             'baru' => 'Baru',
+            'pengecekan' => 'Pengecekan',
             'diverifikasi' => 'Diverifikasi',
             'diproses' => 'Diproses',
             'selesai' => 'Selesai',

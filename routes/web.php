@@ -45,7 +45,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard/pengaduan', [DashboardPengaduanController::class, 'index']);
     Route::get('/dashboard/pengaduan/{pengaduan}', [DashboardPengaduanController::class, 'show']);
-    Route::post('/dashboard/pengaduan/{pengaduan}/tanggapan', [DashboardPengaduanController::class, 'tanggapan']);
-    Route::post('/dashboard/pengaduan/{pengaduan}/assign', [DashboardPengaduanController::class, 'assign']);
-    Route::post('/dashboard/pengaduan/{pengaduan}/pemeriksaan', [DashboardPengaduanController::class, 'pemeriksaan']);
+    Route::post('/dashboard/pengaduan/{pengaduan}/mulai-pengecekan', [DashboardPengaduanController::class, 'mulaiPengecekan']);
+    Route::post('/dashboard/pengaduan/{pengaduan}/verifikasi', [DashboardPengaduanController::class, 'verifikasi']);
+    Route::post('/dashboard/pengaduan/{pengaduan}/tolak', [DashboardPengaduanController::class, 'tolak']);
+    Route::post('/dashboard/pengaduan/{pengaduan}/mulai-proses', [DashboardPengaduanController::class, 'mulaiProses']);
+    Route::post('/dashboard/pengaduan/{pengaduan}/log-proses', [DashboardPengaduanController::class, 'logProses']);
+    Route::post('/dashboard/pengaduan/{pengaduan}/selesai', [DashboardPengaduanController::class, 'selesai']);
 });
