@@ -41,7 +41,7 @@
                 <p class="font-display font-bold text-xl sm:text-2xl text-brand-blue tracking-wide mt-1">{{ session('success') }}</p>
             </div>
 
-            <a href="/pengaduan/{{ session('success') }}/surat" target="_blank" class="inline-flex items-center justify-center gap-2 bg-brand-teal text-white font-semibold rounded-xl px-6 py-3 shadow-lg shadow-brand-teal/30 hover:opacity-90 transition text-sm mt-6">
+            <a href="/pengaduan/{{ session('success') }}/surat" class="inline-flex items-center justify-center gap-2 bg-brand-teal text-white font-semibold rounded-xl px-6 py-3 shadow-lg shadow-brand-teal/30 hover:opacity-90 transition text-sm mt-6">
                 🖨️ Cetak Surat Pengaduan (PDF)
             </a>
 
@@ -285,7 +285,8 @@
                             <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4" x-show="fotoFiles.length > 0">
                                 <template x-for="(item, index) in fotoFiles" :key="index">
                                     <div class="relative">
-                                        <img :src="item.previewUrl" class="w-full h-20 sm:h-24 object-cover rounded-xl border border-slate-200">
+                                        <img :src="item.previewUrl" @click="lightboxUrl = item.previewUrl"
+                                             class="w-full h-20 sm:h-24 object-cover rounded-xl border border-slate-200 cursor-zoom-in hover:opacity-80 transition">
                                         <button type="button" @click="removeFoto(index)"
                                                 class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-md hover:bg-red-600 transition">
                                             ✕
@@ -339,10 +340,11 @@
                                 <dd class="text-ink font-medium break-words" x-text="form.lokasi_kejadian || 'Tidak diisi'"></dd>
                             </dl>
                             <div x-show="fotoFiles.length > 0">
-                                <p class="text-slate-400 text-xs mb-2">Foto Bukti (<span x-text="fotoFiles.length"></span>)</p>
+                                <p class="text-slate-400 text-xs mb-2">Foto Bukti (<span x-text="fotoFiles.length"></span>) — klik untuk lihat penuh</p>
                                 <div class="grid grid-cols-4 gap-2">
                                     <template x-for="(item, index) in fotoFiles" :key="index">
-                                        <img :src="item.previewUrl" class="w-full h-16 object-cover rounded-lg shadow-sm">
+                                        <img :src="item.previewUrl" @click="lightboxUrl = item.previewUrl"
+                                             class="w-full h-16 object-cover rounded-lg shadow-sm cursor-zoom-in hover:opacity-80 transition">
                                     </template>
                                 </div>
                             </div>
@@ -382,6 +384,16 @@
                     </button>
                 </div>
             </form>
+
+            {{-- Lightbox: klik foto di step Review untuk lihat ukuran penuh --}}
+            <div x-show="lightboxUrl" @click="lightboxUrl = null" @keydown.escape.window="lightboxUrl = null"
+                 x-transition class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out" style="display:none">
+                <button type="button" @click="lightboxUrl = null"
+                        class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl transition">
+                    ✕
+                </button>
+                <img :src="lightboxUrl" @click.stop class="max-w-full max-h-full rounded-xl shadow-2xl">
+            </div>
         </div>
     @endif
 
@@ -393,6 +405,7 @@ function pengaduanForm() {
         currentStep: 1,
         dragging: false,
         fotoFiles: [], // { file, previewUrl, name }
+        lightboxUrl: null,
         konfirmasi: false,
         categoryLabel: @js(old('kategori_pengaduan_id') && isset($kategoris) ? optional($kategoris->firstWhere('id', (int) old('kategori_pengaduan_id')))->nama : ''),
 

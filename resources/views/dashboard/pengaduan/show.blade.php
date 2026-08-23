@@ -8,7 +8,7 @@
         ← Kembali ke daftar pengaduan
     </a>
 
-    <div class="grid lg:grid-cols-3 gap-5">
+    <div class="grid lg:grid-cols-3 gap-5" x-data="{ lightboxUrl: null }">
 
         {{-- ===== KOLOM KIRI: INFO PENGADUAN ===== --}}
         <div class="lg:col-span-2 space-y-5">
@@ -68,9 +68,8 @@
                         <p class="text-xs text-slate-400 mb-2">Foto Bukti dari Pelapor ({{ $pengaduan->fotos->count() }})</p>
                         <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
                             @foreach ($pengaduan->fotos as $foto)
-                                <a href="{{ $foto->url() }}" target="_blank">
-                                    <img src="{{ $foto->url() }}" class="w-full h-16 sm:h-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition">
-                                </a>
+                                <img src="{{ $foto->url() }}" @click="lightboxUrl = '{{ $foto->url() }}'"
+                                     class="w-full h-16 sm:h-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition cursor-zoom-in">
                             @endforeach
                         </div>
                     </div>
@@ -117,9 +116,8 @@
                                 @if ($tanggapan->fotos->count() > 0)
                                     <div class="flex flex-wrap gap-2 mt-2">
                                         @foreach ($tanggapan->fotos as $foto)
-                                            <a href="{{ $foto->url() }}" target="_blank">
-                                                <img src="{{ $foto->url() }}" class="h-20 w-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition">
-                                            </a>
+                                            <img src="{{ $foto->url() }}" @click="lightboxUrl = '{{ $foto->url() }}'"
+                                                 class="h-20 w-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition cursor-zoom-in">
                                         @endforeach
                                     </div>
                                 @endif
@@ -227,7 +225,8 @@
                         <div class="grid grid-cols-4 gap-2" x-show="fotoL.length > 0">
                             <template x-for="(item, index) in fotoL" :key="index">
                                 <div class="relative">
-                                    <img :src="item.previewUrl" class="w-full h-16 object-cover rounded-lg border border-slate-200">
+                                    <img :src="item.previewUrl" @click="lightboxUrl = item.previewUrl"
+                                         class="w-full h-16 object-cover rounded-lg border border-slate-200 cursor-zoom-in hover:opacity-80 transition">
                                     <button type="button" @click="removeFoto('fotoL', index, 'fotoLInput')"
                                             class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-md hover:bg-red-600 transition">✕</button>
                                 </div>
@@ -318,7 +317,8 @@
                             <div class="grid grid-cols-4 gap-2 mt-2" x-show="fotoV.length > 0">
                                 <template x-for="(item, index) in fotoV" :key="index">
                                     <div class="relative">
-                                        <img :src="item.previewUrl" class="w-full h-14 object-cover rounded-lg border border-slate-200">
+                                        <img :src="item.previewUrl" @click="lightboxUrl = item.previewUrl"
+                                             class="w-full h-14 object-cover rounded-lg border border-slate-200 cursor-zoom-in hover:opacity-80 transition">
                                         <button type="button" @click="removeFoto('fotoV', index, 'fotoVInput')" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-md hover:bg-red-600 transition">✕</button>
                                     </div>
                                 </template>
@@ -384,6 +384,16 @@
                 </div>
             </div>
 
+        </div>
+
+        {{-- Lightbox: klik foto mana pun untuk lihat ukuran penuh --}}
+        <div x-show="lightboxUrl" @click="lightboxUrl = null" @keydown.escape.window="lightboxUrl = null"
+             x-transition class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out" style="display:none">
+            <button type="button" @click="lightboxUrl = null"
+                    class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl transition">
+                ✕
+            </button>
+            <img :src="lightboxUrl" @click.stop class="max-w-full max-h-full rounded-xl shadow-2xl">
         </div>
     </div>
 
