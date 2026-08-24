@@ -386,14 +386,18 @@
             </form>
 
             {{-- Lightbox: klik foto di step Review untuk lihat ukuran penuh --}}
-            <div x-show="lightboxUrl" @click="lightboxUrl = null" @keydown.escape.window="lightboxUrl = null"
-                 x-transition class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out" style="display:none">
-                <button type="button" @click="lightboxUrl = null"
-                        class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl transition">
-                    ✕
-                </button>
-                <img :src="lightboxUrl" @click.stop class="max-w-full max-h-full rounded-xl shadow-2xl">
-            </div>
+            {{-- x-teleport = dipindahkan langsung ke akhir <body> saat dijalankan, --}}
+            {{-- supaya dijamin nutup dari ujung ke ujung layar, gak kepengaruh navbar/elemen lain. --}}
+            <template x-teleport="body">
+                <div x-show="lightboxUrl" @click="lightboxUrl = null" @keydown.escape.window="lightboxUrl = null"
+                     x-transition class="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 sm:p-8 cursor-zoom-out overflow-y-auto" style="display:none">
+                    <button type="button" @click="lightboxUrl = null"
+                            class="fixed top-3 right-3 sm:top-6 sm:right-6 z-[110] w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-xl backdrop-blur-sm transition">
+                        ✕
+                    </button>
+                    <img :src="lightboxUrl" @click.stop class="max-w-full max-h-full object-contain rounded-xl shadow-2xl my-auto">
+                </div>
+            </template>
         </div>
     @endif
 

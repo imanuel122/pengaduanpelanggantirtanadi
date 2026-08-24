@@ -86,13 +86,35 @@
                         <p class="text-[11px] text-slate-400 capitalize">{{ auth()->user()->role }}</p>
                     </div>
                 </div>
-                <form method="POST" action="/logout">
-                    @csrf
-                    <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-red-500 hover:bg-red-50 transition">
+                <div x-data="{ confirmLogoutOpen: false }">
+                    <button type="button" @click="confirmLogoutOpen = true" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-red-500 hover:bg-red-50 transition">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
                         Keluar
                     </button>
-                </form>
+
+                    {{-- Modal konfirmasi logout --}}
+                    <div x-show="confirmLogoutOpen" x-transition class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="display:none">
+                        <div class="absolute inset-0 bg-black/40" @click="confirmLogoutOpen = false"></div>
+                        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+                            <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+                            </div>
+                            <p class="font-display font-bold text-ink mb-1">Keluar dari Dashboard?</p>
+                            <p class="text-sm text-slate-500 mb-5">Anda perlu login lagi untuk mengakses dashboard ini.</p>
+                            <div class="flex gap-2">
+                                <button type="button" @click="confirmLogoutOpen = false" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                                    Batal
+                                </button>
+                                <form method="POST" action="/logout" class="flex-1">
+                                    @csrf
+                                    <button type="submit" class="w-full h-11 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition">
+                                        Ya, Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </aside>
 
