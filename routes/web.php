@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Dashboard\KategoriController as DashboardKategoriController;
 use App\Http\Controllers\Dashboard\LaporanController as DashboardLaporanController;
 use App\Http\Controllers\Dashboard\PengaduanController as DashboardPengaduanController;
+use App\Http\Controllers\Dashboard\UserController as DashboardUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PengaduanController;
@@ -53,6 +54,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/kategori', [DashboardKategoriController::class, 'store']);
     Route::put('/dashboard/kategori/{kategori}', [DashboardKategoriController::class, 'update']);
     Route::delete('/dashboard/kategori/{kategori}', [DashboardKategoriController::class, 'destroy']);
+
+    Route::get('/dashboard/user', [DashboardUserController::class, 'index']);
+    Route::post('/dashboard/user', [DashboardUserController::class, 'store']);
+    Route::put('/dashboard/user/{user}', [DashboardUserController::class, 'update']);
+    Route::delete('/dashboard/user/{user}', [DashboardUserController::class, 'destroy']);
 
     Route::get('/dashboard/laporan', [DashboardLaporanController::class, 'index']);
     Route::get('/dashboard/laporan/export-pdf', [DashboardLaporanController::class, 'exportPdf']);

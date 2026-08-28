@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 28, 2026 at 10:08 PM
+-- Generation Time: Aug 28, 2026 at 12:32 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.4.24
 
@@ -355,8 +355,8 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('0jFDGgkSpHDkwRKyFUgmZR4QsaQc5MW3lx7bIigT', 2, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiIwSFlhYWNvUWN1OFdDenl6bVJmWFNGMHJNQWM3T0VuRUlIQWhseUhOIiwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119LCJfcHJldmlvdXMiOnsidXJsIjoiaHR0cDpcL1wvcGVuZ2FkdWFucGVsYW5nZ2FudGlydGFuYWRpLnRlc3RcL2Rhc2hib2FyZFwva2F0ZWdvcmkiLCJyb3V0ZSI6bnVsbH0sImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjoyfQ==', 1787940572),
-('XsP9F0mD4LBVJtQD6RL3Wpj6ajKWlmIhOebymXp4', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiJvazdtM3M4YXVpc2lKWEIxdTRxTm9zd3BXREc1c284Tm5mN0s2b04wIiwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119fQ==', 1787954755);
+('fduqP1KE0hxxgfK1kVWyNDdfz0qK1EN4Wr7C693Z', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiJWSzJvZ3JVVnk3bHhFNlEwdlBqeGRydHVBSm1ZaFF3dmlLbGFvZUVwIiwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119LCJfcHJldmlvdXMiOnsidXJsIjoiaHR0cDpcL1wvcGVuZ2FkdWFucGVsYW5nZ2FudGlydGFuYWRpLnRlc3RcL2Rhc2hib2FyZFwvcGVuZ2FkdWFuIiwicm91dGUiOm51bGx9LCJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI6MX0=', 1787881576),
+('jX30elGTWXQ7BmNXfXgH3Vjo3nOd1NQcBBLn5yBD', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'eyJfdG9rZW4iOiJHZmwyY0pvaXI2aHVyWDJTUGlmWlJnUXJUVDU4b1BHUkV2ZE1sV0ZDIiwiX2ZsYXNoIjp7Im9sZCI6W10sIm5ldyI6W119LCJfcHJldmlvdXMiOnsidXJsIjoiaHR0cDpcL1wvcGVuZ2FkdWFucGVsYW5nZ2FudGlydGFuYWRpLnRlc3RcL2Rhc2hib2FyZFwvbGFwb3Jhblwva2V1YW5nYW5cL2V4cG9ydC1wZGYiLCJyb3V0ZSI6bnVsbH0sImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjoxfQ==', 1787899855);
 
 -- --------------------------------------------------------
 
@@ -627,8 +627,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `nipp`, `email`, `phone`, `role`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Admin PDAM Padang Bulan', '19850101202201001', 'admin@pdamtirtanadi.test', NULL, 'admin', NULL, '$2y$12$rXy85kzzAsLOIXLaCNtDx.sD/T3m5LHAr7h/fJhJCgRIktH2iaoC.', '9xUWAjC1B6JS74OcN9a2GmXjjSgMGaT13XW3lG3P11V4NRFpzxJnCrNJqlvI', '2026-08-20 12:32:03', '2026-08-20 12:32:03'),
-(2, 'Petugas Lapangan 1', '19900202202201002', 'petugas@pdamtirtanadi.test', '081233464545', 'petugas', NULL, '$2y$12$7WL2W.usZr.CI/mcz0hbyO4MRrWh/iCucjgnL5attIIl8fqu8dDFu', NULL, '2026-08-20 12:32:03', '2026-08-28 18:04:20');
+(1, 'Admin PDAM Padang Bulan', '19850101202201001', 'admin@pdamtirtanadi.test', NULL, 'admin', NULL, '$2y$12$rXy85kzzAsLOIXLaCNtDx.sD/T3m5LHAr7h/fJhJCgRIktH2iaoC.', 'gBDjwtIXWhr0zpmMqPwmRSbfkkr2dQpzTuCxItR5HPl2hZc8e6SX7B3rsVEB', '2026-08-20 12:32:03', '2026-08-20 12:32:03'),
+(2, 'Petugas Lapangan 1', '19900202202201002', 'petugas@pdamtirtanadi.test', NULL, 'petugas', NULL, '$2y$12$7WL2W.usZr.CI/mcz0hbyO4MRrWh/iCucjgnL5attIIl8fqu8dDFu', NULL, '2026-08-20 12:32:03', '2026-08-20 12:32:03');
 
 --
 -- Indexes for dumped tables
@@ -790,7 +790,7 @@ ALTER TABLE `tanggapan_pengaduans`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables

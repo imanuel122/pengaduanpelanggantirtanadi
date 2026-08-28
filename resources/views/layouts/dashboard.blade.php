@@ -74,10 +74,17 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
                     Laporan
                 </a>
+                @if (auth()->user()->isAdmin())
+                    <a href="/dashboard/user" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition {{ str_starts_with($current, 'dashboard/user') ? 'bg-brand-blue/10 text-brand-blue' : 'text-slate-600 hover:bg-slate-50' }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                        Manajemen User
+                    </a>
+                @endif
             </nav>
 
-            <div class="p-3 border-t border-slate-100">
-                <div class="flex items-center gap-3 px-3 py-2.5">
+            <div class="p-3 border-t border-slate-100" x-data="{ profileModalOpen: false }">
+                <button type="button" @click="profileModalOpen = true"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition text-left">
                     <div class="w-9 h-9 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue font-display font-bold text-sm shrink-0">
                         {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                     </div>
@@ -85,7 +92,58 @@
                         <p class="font-medium text-sm truncate">{{ auth()->user()->name }}</p>
                         <p class="text-[11px] text-slate-400 capitalize">{{ auth()->user()->role }}</p>
                     </div>
-                </div>
+                </button>
+
+                {{-- Modal detail profil sendiri -- read-only, tidak bisa diedit/dihapus di sini. --}}
+                {{-- Kelola akun (edit/hapus) dilakukan lewat fitur Manajemen User/Petugas. --}}
+                <template x-teleport="body">
+                    <div x-show="profileModalOpen" x-transition class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="display:none">
+                        <div class="absolute inset-0 bg-black/40" @click="profileModalOpen = false"></div>
+                        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+                            <div class="flex items-center gap-3 mb-5">
+                                <div class="w-12 h-12 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue font-display font-bold text-base shrink-0">
+                                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                                </div>
+                                <div class="leading-tight min-w-0">
+                                    <p class="font-display font-bold text-ink truncate">{{ auth()->user()->name }}</p>
+                                    <p class="text-xs text-slate-400 capitalize">{{ auth()->user()->role }}</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 text-sm">
+                                <div>
+                                    <p class="text-xs text-slate-400">NIPP</p>
+                                    <p class="font-medium text-ink">{{ auth()->user()->nipp ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400">Email</p>
+                                    <p class="font-medium text-ink">{{ auth()->user()->email }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400">No. Telepon</p>
+                                    <p class="font-medium text-ink">{{ auth()->user()->phone ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400">Role</p>
+                                    <p class="font-medium text-ink capitalize">{{ auth()->user()->role }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400">Bergabung Sejak</p>
+                                    <p class="font-medium text-ink">{{ auth()->user()->created_at?->translatedFormat('d F Y') ?? '-' }}</p>
+                                </div>
+                            </div>
+
+                            <p class="text-[11px] text-slate-400 mt-4 leading-relaxed">
+                                Profil ini hanya untuk dilihat. Untuk mengubah atau menghapus akun, hubungi admin lewat menu Manajemen User/Petugas.
+                            </p>
+
+                            <button type="button" @click="profileModalOpen = false" class="w-full h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition mt-5">
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
                 <div x-data="{ confirmLogoutOpen: false }">
                     <button type="button" @click="confirmLogoutOpen = true" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-red-500 hover:bg-red-50 transition">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
