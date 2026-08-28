@@ -10,6 +10,8 @@
             'semua' => 'Semua',
             'baru' => 'Baru',
             'pengecekan' => 'Pengecekan',
+            'menunggu_persetujuan' => 'Nunggu Persetujuan',
+            'menunggu_verifikasi_pembayaran' => 'Verifikasi Bayar',
             'diverifikasi' => 'Diverifikasi',
             'diproses' => 'Diproses',
             'selesai' => 'Selesai',
@@ -32,16 +34,26 @@
         @endforeach
     </div>
 
-    {{-- Pencarian --}}
-    <form method="GET" action="/dashboard/pengaduan" class="flex gap-2 mb-5">
+    {{-- Pencarian + filter tanggal --}}
+    <form method="GET" action="/dashboard/pengaduan" class="flex flex-wrap gap-2 mb-5">
         @if ($statusAktif !== 'semua')
             <input type="hidden" name="status" value="{{ $statusAktif }}">
         @endif
         <input type="text" name="cari" value="{{ $cari }}" placeholder="Cari nomor pengaduan, nama pelapor, atau judul..."
-               class="flex-1 h-11 rounded-xl border border-slate-200 px-4 text-sm focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition bg-white">
+               class="flex-1 min-w-[200px] h-11 rounded-xl border border-slate-200 px-4 text-sm focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition bg-white">
+        <input type="date" name="dari" value="{{ $dari }}" title="Dari tanggal"
+               class="h-11 rounded-xl border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-blue outline-none bg-white">
+        <input type="date" name="sampai" value="{{ $sampai }}" title="Sampai tanggal"
+               class="h-11 rounded-xl border border-slate-200 px-3 text-sm focus:ring-2 focus:ring-brand-blue outline-none bg-white">
         <button type="submit" class="h-11 px-5 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-600 hover:border-brand-blue/40 transition">
             Cari
         </button>
+        @if ($cari || $dari || $sampai)
+            <a href="{{ $statusAktif !== 'semua' ? '/dashboard/pengaduan?status=' . $statusAktif : '/dashboard/pengaduan' }}"
+               class="h-11 px-4 rounded-xl text-sm font-semibold text-slate-400 hover:text-red-500 transition flex items-center">
+                ✕ Reset
+            </a>
+        @endif
     </form>
 
     {{-- Tabel/list pengaduan --}}
@@ -72,6 +84,8 @@
                 <p class="text-sm text-slate-400 px-5 py-12 text-center">
                     @if ($cari)
                         Tidak ada pengaduan yang cocok dengan pencarian "{{ $cari }}".
+                    @elseif ($dari || $sampai)
+                        Tidak ada pengaduan pada rentang tanggal yang dipilih.
                     @else
                         Belum ada pengaduan di kategori ini.
                     @endif

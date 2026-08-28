@@ -157,8 +157,8 @@
         /* ===== QR CODE (2 buah berdampingan) ===== */
         .qr-table { width: 100%; border-collapse: collapse; margin: 3px 0 7px 0; }
         .qr-table td { vertical-align: middle; padding-right: 4px; }
-        .qr-image { width: 58px; }
-        .qr-image img { width: 50px; height: 50px; }
+        .qr-image { width: 92px; }
+        .qr-image img { width: 82px; height: 82px; }
         .qr-text { padding-left: 6px; padding-right: 14px; font-size: 8pt; color: #444444; line-height: 1.3; }
         .qr-text strong { color: #0B6FB4; }
 

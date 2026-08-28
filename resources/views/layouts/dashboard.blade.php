@@ -66,14 +66,14 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
                     Pengaduan
                 </a>
-                <span class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-slate-300 cursor-not-allowed">
+                <a href="/dashboard/kategori" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition {{ str_starts_with($current, 'dashboard/kategori') ? 'bg-brand-blue/10 text-brand-blue' : 'text-slate-600 hover:bg-slate-50' }}">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41L11 3.83V3H3v8h.83L13.41 20.59a2 2 0 002.83 0l4.35-4.35a2 2 0 000-2.83z"/></svg>
-                    Kategori <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded ml-auto">segera</span>
-                </span>
-                <span class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-slate-300 cursor-not-allowed">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17H4v-2a4 4 0 014-4h4"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-                    Laporan <span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded ml-auto">segera</span>
-                </span>
+                    Kategori
+                </a>
+                <a href="/dashboard/laporan" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition {{ str_starts_with($current, 'dashboard/laporan') ? 'bg-brand-blue/10 text-brand-blue' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    Laporan
+                </a>
             </nav>
 
             <div class="p-3 border-t border-slate-100">
@@ -92,28 +92,32 @@
                         Keluar
                     </button>
 
-                    {{-- Modal konfirmasi logout --}}
-                    <div x-show="confirmLogoutOpen" x-transition class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="display:none">
-                        <div class="absolute inset-0 bg-black/40" @click="confirmLogoutOpen = false"></div>
-                        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-                            <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-                            </div>
-                            <p class="font-display font-bold text-ink mb-1">Keluar dari Dashboard?</p>
-                            <p class="text-sm text-slate-500 mb-5">Anda perlu login lagi untuk mengakses dashboard ini.</p>
-                            <div class="flex gap-2">
-                                <button type="button" @click="confirmLogoutOpen = false" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
-                                    Batal
-                                </button>
-                                <form method="POST" action="/logout" class="flex-1">
-                                    @csrf
-                                    <button type="submit" class="w-full h-11 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition">
-                                        Ya, Logout
+                    {{-- Modal konfirmasi logout -- sengaja di-teleport ke <body>, soalnya <aside> di atas --}}
+                    {{-- selalu punya CSS transform aktif (buat animasi geser sidebar di mobile), dan --}}
+                    {{-- itu bikin elemen fixed di dalamnya ke-container di situ, bukan ke seluruh layar. --}}
+                    <template x-teleport="body">
+                        <div x-show="confirmLogoutOpen" x-transition class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="display:none">
+                            <div class="absolute inset-0 bg-black/40" @click="confirmLogoutOpen = false"></div>
+                            <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+                                <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+                                </div>
+                                <p class="font-display font-bold text-ink mb-1">Keluar dari Dashboard?</p>
+                                <p class="text-sm text-slate-500 mb-5">Anda perlu login lagi untuk mengakses dashboard ini.</p>
+                                <div class="flex gap-2">
+                                    <button type="button" @click="confirmLogoutOpen = false" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                                        Batal
                                     </button>
-                                </form>
+                                    <form method="POST" action="/logout" class="flex-1">
+                                        @csrf
+                                        <button type="submit" class="w-full h-11 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition">
+                                            Ya, Logout
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
             </div>
         </aside>
@@ -135,6 +139,12 @@
                 @if (session('success'))
                     <div class="bg-brand-green/10 border border-brand-green/30 text-brand-green rounded-xl p-3.5 mb-6 text-sm font-medium">
                         ✓ {{ session('success') }}
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3.5 mb-6 text-sm font-medium">
+                        ✕ {{ session('error') }}
                     </div>
                 @endif
 

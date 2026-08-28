@@ -65,7 +65,7 @@
 
     {{-- ===== STATE: KETEMU ===== --}}
     @else
-        <div class="mt-8 space-y-6" x-data="{ lightboxUrl: null }">
+        <div class="mt-8 space-y-6" x-data="{ lightboxUrl: null, tolakOpen: false, confirmSetuju: false }">
 
             {{-- Ringkasan pengaduan --}}
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-7">
@@ -122,6 +122,201 @@
                 </a>
             </div>
 
+            {{-- Kartu Surat Pemberitahuan per tahap status --}}
+            @if (count($pengaduan->daftarSuratStatusTersedia()) > 0)
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-7">
+                    <p class="font-display font-semibold text-ink mb-1">📋 Surat Pemberitahuan</p>
+                    <p class="text-xs text-slate-400 mb-4">Surat resmi yang diterbitkan di setiap tahap penanganan pengaduan Anda.</p>
+                    <div class="grid sm:grid-cols-2 gap-2">
+                        @foreach ($pengaduan->daftarSuratStatusTersedia() as $jenisSurat => $namaSurat)
+                            <a href="/pengaduan/{{ $pengaduan->kode_pengaduan }}/surat/{{ $jenisSurat }}" target="_blank" rel="noopener"
+                               class="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 transition rounded-xl p-3 border border-slate-200">
+                                <span class="text-xl">📄</span>
+                                <span class="text-sm text-ink font-medium flex-1">{{ $namaSurat }}</span>
+                                <span class="text-xs text-brand-blue font-semibold shrink-0">Buka ↗</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            {{-- Kartu Persetujuan Biaya --}}
+            @if ($pengaduan->butuhPersetujuan())
+                <div class="bg-amber-50 rounded-2xl border border-amber-200 shadow-sm p-5 sm:p-7">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-xl">⚠️</span>
+                        <p class="font-display font-semibold text-ink">Menunggu Persetujuan Anda</p>
+                    </div>
+
+                    @if ($pengaduan->catatan_verifikasi_pembayaran)
+                        <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
+                            <p class="text-xs font-semibold text-red-600 mb-1">⚠️ Bukti pembayaran sebelumnya ditolak</p>
+                            <p class="text-xs text-red-500 leading-relaxed">{{ $pengaduan->catatan_verifikasi_pembayaran }}</p>
+                            <p class="text-xs text-red-500 mt-1">Mohon upload ulang bukti pembayaran yang benar di bawah ini.</p>
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                            Setelah dicek petugas, penanganan pengaduan ini memerlukan biaya. Silakan lihat rincian
+                            biayanya di bawah, lalu pilih <span class="font-semibold text-ink">Setuju</span> (upload
+                            bukti bayar) untuk melanjutkan, atau <span class="font-semibold text-ink">Tidak Setuju</span> untuk
+                            membatalkan pengaduan.
+                        </p>
+                    @endif
+
+                    <div class="bg-white rounded-xl border border-amber-200 p-4 mb-4">
+                        <p class="text-xs text-slate-400 mb-2">Rincian Biaya</p>
+                        @if ($pengaduan->rincianBiayaFileUrl())
+                            <a href="{{ $pengaduan->rincianBiayaFileUrl() }}" target="_blank" rel="noopener"
+                               class="flex items-center gap-3 bg-slate-50 hover:bg-slate-100 transition rounded-lg p-3 mb-3">
+                                <span class="text-2xl">{{ $pengaduan->rincianBiayaFileIcon() }}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-ink font-medium truncate">{{ $pengaduan->rincian_biaya_file_nama_asli ?? 'Dokumen Rincian Biaya' }}</p>
+                                    <p class="text-xs text-slate-400">Klik untuk lihat / unduh</p>
+                                </div>
+                                <span class="text-brand-blue text-xs font-semibold shrink-0">Buka ↗</span>
+                            </a>
+                        @endif
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs text-slate-400">Total Biaya</span>
+                            <span class="font-display font-bold text-lg text-amber-600">{{ $pengaduan->formattedTotalBiaya() }}</span>
+                        </div>
+                    </div>
+
+                    @if (!$errors->has('catatan_persetujuan'))
+                        <div x-show="!tolakOpen">
+                            {{-- Setuju + wajib upload bukti pembayaran --}}
+                            <form method="POST" action="/pengaduan/{{ $pengaduan->kode_pengaduan }}/setuju" enctype="multipart/form-data" x-ref="formSetuju">
+                                @csrf
+                                <label class="block text-sm font-medium text-ink mb-1.5">Upload Bukti Pembayaran <span class="text-red-500">*</span></label>
+                                <input type="file" name="bukti_pembayaran" accept=".jpg,.jpeg,.png,.pdf" required
+                                       class="w-full text-sm rounded-xl border {{ $errors->has('bukti_pembayaran') ? 'border-red-400' : 'border-slate-200' }} px-3 py-2.5 bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-brand-blue/10 file:text-brand-blue file:text-xs file:font-semibold">
+                                @error('bukti_pembayaran')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                                <p class="text-xs text-slate-400 mt-1.5 mb-3">Format JPG, PNG, atau PDF. Maksimal 5MB.</p>
+
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <button type="button" @click="$refs.formSetuju.reportValidity() && (confirmSetuju = true)"
+                                            class="flex-1 h-11 rounded-xl bg-brand-green text-white font-semibold text-sm shadow-lg shadow-brand-green/30 hover:opacity-90 transition">
+                                        ✓ Setuju & Kirim Bukti Bayar
+                                    </button>
+                                    <button type="button" @click="tolakOpen = true" class="flex-1 h-11 rounded-xl border border-red-300 text-red-600 font-semibold text-sm hover:bg-red-50 transition">
+                                        ✕ Tidak Setuju
+                                    </button>
+                                </div>
+
+                                {{-- Modal konfirmasi — sengaja ditaruh DI DALAM form yang sama (bukan di-teleport), --}}
+                                {{-- supaya tombol "Ya, Kirim" bisa jadi tombol submit asli tanpa perlu $refs lintas elemen. --}}
+                                <div x-show="confirmSetuju" @keydown.escape.window="confirmSetuju = false" x-cloak
+                                     x-transition class="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" style="display:none">
+                                    <div class="absolute inset-0" @click="confirmSetuju = false"></div>
+                                    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+                                        <div class="w-11 h-11 rounded-full bg-brand-green/10 flex items-center justify-center mb-3">
+                                            <span class="text-xl">✓</span>
+                                        </div>
+                                        <p class="font-display font-bold text-lg text-ink mb-1.5">Konfirmasi Persetujuan</p>
+                                        <p class="text-sm text-slate-500 mb-5 leading-relaxed">
+                                            Anda akan menyetujui biaya sebesar
+                                            <span class="font-semibold text-ink">{{ $pengaduan->formattedTotalBiaya() }}</span>
+                                            dan mengirim bukti pembayaran yang sudah dipilih. Pastikan filenya sudah benar.
+                                        </p>
+                                        <div class="flex gap-2">
+                                            <button type="button" @click="confirmSetuju = false" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Batal</button>
+                                            <button type="submit" class="flex-1 h-11 rounded-xl bg-brand-green text-white text-sm font-semibold hover:opacity-90 transition">Ya, Kirim</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    @endif
+
+                    {{-- Form alasan penolakan --}}
+                    <div x-show="tolakOpen || {{ $errors->has('catatan_persetujuan') ? 'true' : 'false' }}" style="display:none" x-cloak>
+                        <form method="POST" action="/pengaduan/{{ $pengaduan->kode_pengaduan }}/tolak-biaya" class="mt-2">
+                            @csrf
+                            <label class="block text-sm font-medium text-ink mb-1.5">Alasan tidak setuju <span class="text-slate-400 font-normal text-xs">— opsional</span></label>
+                            <textarea name="catatan_persetujuan" rows="3" placeholder="Contoh: Biayanya terlalu mahal, saya mau tunda dulu."
+                                      class="w-full rounded-xl border {{ $errors->has('catatan_persetujuan') ? 'border-red-400' : 'border-slate-200' }} px-4 py-3 text-sm resize-none mb-1 focus:ring-2 focus:ring-red-300 outline-none">{{ old('catatan_persetujuan') }}</textarea>
+                            @error('catatan_persetujuan')<p class="text-red-500 text-xs mb-3">{{ $message }}</p>@enderror
+                            <div class="flex gap-2 mt-3">
+                                <button type="button" @click="tolakOpen = false" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Batal</button>
+                                <button type="submit" class="flex-1 h-11 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition">
+                                    Ya, Batalkan Pengaduan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            @elseif ($pengaduan->menungguVerifikasiPembayaran())
+                {{-- Sudah setuju & upload bukti bayar, tinggal nunggu admin cek --}}
+                <div class="bg-cyan-50 rounded-2xl border border-cyan-200 shadow-sm p-5 sm:p-7">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-xl">⏳</span>
+                        <p class="font-display font-semibold text-ink">Bukti Pembayaran Sedang Diverifikasi</p>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                        Terima kasih, bukti pembayaran Anda sudah kami terima dan sedang dicek oleh admin.
+                        Halaman ini akan otomatis update statusnya begitu sudah diverifikasi.
+                    </p>
+                    <div class="bg-white rounded-xl border border-cyan-200 p-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400">Total Biaya Disetujui</p>
+                            <span class="font-display font-bold text-lg text-cyan-700">{{ $pengaduan->formattedTotalBiaya() }}</span>
+                        </div>
+                        @if ($pengaduan->buktiPembayaranUrl())
+                            <a href="{{ $pengaduan->buktiPembayaranUrl() }}" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-blue">Lihat Bukti Bayar ↗</a>
+                        @endif
+                    </div>
+                </div>
+
+            @elseif (!is_null($pengaduan->total_biaya))
+                {{-- total_biaya sudah pernah diisi admin: bisa gratis (0), atau ada biaya yang sudah disetujui/ditolak --}}
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-7">
+                    <p class="font-display font-semibold text-ink mb-3">Biaya Penanganan</p>
+                    <div class="bg-slate-50 rounded-xl p-4 text-sm">
+                        @if ($pengaduan->rincianBiayaFileUrl())
+                            <a href="{{ $pengaduan->rincianBiayaFileUrl() }}" target="_blank" rel="noopener"
+                               class="flex items-center gap-3 bg-white hover:bg-slate-100 transition rounded-lg p-3 mb-3 border border-slate-200">
+                                <span class="text-2xl">{{ $pengaduan->rincianBiayaFileIcon() }}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-ink font-medium truncate">{{ $pengaduan->rincian_biaya_file_nama_asli ?? 'Dokumen Rincian Biaya' }}</p>
+                                    <p class="text-xs text-slate-400">Klik untuk lihat / unduh</p>
+                                </div>
+                            </a>
+                        @endif
+                        <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                            <span class="text-xs text-slate-400">Total Biaya</span>
+                            @if ((float) $pengaduan->total_biaya <= 0)
+                                <span class="font-display font-bold text-brand-green">Gratis</span>
+                            @else
+                                <span class="font-display font-bold text-ink">{{ $pengaduan->formattedTotalBiaya() }}</span>
+                            @endif
+                        </div>
+
+                        @if ((float) $pengaduan->total_biaya <= 0)
+                            <p class="text-xs mt-2 text-brand-green">✓ Pengaduan ini tidak dikenakan biaya</p>
+                        @elseif ($pengaduan->status_persetujuan === 'disetujui')
+                            <p class="text-xs mt-2 text-brand-green">
+                                ✓ Sudah disetujui & dibayar pelanggan
+                                @if ($pengaduan->tanggal_persetujuan)
+                                    pada {{ $pengaduan->tanggal_persetujuan->translatedFormat('d F Y, H:i') }} WIB
+                                @endif
+                            </p>
+                        @elseif ($pengaduan->status_persetujuan === 'ditolak')
+                            <p class="text-xs mt-2 text-red-500">
+                                ✕ Ditolak pelanggan
+                                @if ($pengaduan->tanggal_persetujuan)
+                                    pada {{ $pengaduan->tanggal_persetujuan->translatedFormat('d F Y, H:i') }} WIB
+                                @endif
+                            </p>
+                        @endif
+
+                        @if ($pengaduan->buktiPembayaranUrl())
+                            <a href="{{ $pengaduan->buktiPembayaranUrl() }}" target="_blank" rel="noopener" class="inline-block text-xs font-semibold text-brand-blue mt-2">Lihat Bukti Bayar ↗</a>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             {{-- Timeline --}}
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-7">
                 <p class="font-display font-semibold text-ink mb-6">Riwayat Perkembangan</p>
@@ -144,6 +339,13 @@
 
                                 @if ($tanggapan->user)
                                     <p class="text-xs text-slate-400 mt-1">oleh {{ $tanggapan->user->name }}</p>
+                                @endif
+
+                                @if ($tanggapan->jenis_surat && $pengaduan->suratTersedia($tanggapan->jenis_surat))
+                                    <a href="/pengaduan/{{ $pengaduan->kode_pengaduan }}/surat/{{ $tanggapan->jenis_surat }}" target="_blank" rel="noopener"
+                                       class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue mt-1.5">
+                                        📄 Lihat {{ $pengaduan->namaSurat($tanggapan->jenis_surat) }} ↗
+                                    </a>
                                 @endif
 
                                 @if ($tanggapan->fotos->count() > 0)

@@ -13,6 +13,7 @@ class TanggapanPengaduan extends Model
         'user_id',
         'pesan',
         'status_baru',
+        'jenis_surat',
     ];
 
     protected $casts = [
@@ -48,6 +49,8 @@ class TanggapanPengaduan extends Model
         return match ($this->status_baru) {
             'baru' => 'bg-brand-blue',
             'pengecekan' => 'bg-violet-500',
+            'menunggu_persetujuan' => 'bg-orange-500',
+            'menunggu_verifikasi_pembayaran' => 'bg-cyan-500',
             'diverifikasi' => 'bg-amber-400',
             'diproses' => 'bg-brand-teal',
             'selesai' => 'bg-brand-green',

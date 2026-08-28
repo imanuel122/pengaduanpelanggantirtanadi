@@ -91,6 +91,44 @@
                         @if ($pengaduan->tanggal_pemeriksaan)
                             <p class="text-xs text-slate-400 mt-1.5">Diperiksa: {{ $pengaduan->tanggal_pemeriksaan->translatedFormat('d F Y, H:i') }} WIB</p>
                         @endif
+
+                        @if ($pengaduan->total_biaya)
+                            <div class="mt-3 pt-3 border-t border-slate-200">
+                                <p class="text-xs text-slate-400 mb-1.5">Rincian Biaya</p>
+                                @if ($pengaduan->rincianBiayaFileUrl())
+                                    <a href="{{ $pengaduan->rincianBiayaFileUrl() }}" target="_blank" rel="noopener"
+                                       class="flex items-center gap-2.5 bg-white hover:bg-slate-100 transition rounded-lg p-2.5 mb-2 border border-slate-200">
+                                        <span class="text-xl">{{ $pengaduan->rincianBiayaFileIcon() }}</span>
+                                        <span class="text-sm text-ink font-medium truncate flex-1">{{ $pengaduan->rincian_biaya_file_nama_asli ?? 'Dokumen Rincian Biaya' }}</span>
+                                        <span class="text-xs text-brand-blue font-semibold shrink-0">Buka ↗</span>
+                                    </a>
+                                @endif
+                                <div class="flex items-center justify-between mt-2">
+                                    @if ((float) $pengaduan->total_biaya <= 0)
+                                        <span class="font-display font-bold text-brand-green">Gratis</span>
+                                        <span class="text-xs font-semibold text-slate-400">Tidak ada biaya</span>
+                                    @else
+                                        <span class="font-display font-bold text-ink">{{ $pengaduan->formattedTotalBiaya() }}</span>
+                                        @if ($pengaduan->status_persetujuan === 'menunggu')
+                                            <span class="text-xs font-semibold text-amber-600">⏳ Menunggu Persetujuan</span>
+                                        @elseif ($pengaduan->status_persetujuan === 'disetujui')
+                                            <span class="text-xs font-semibold text-brand-green">✓ Disetujui Pelanggan</span>
+                                        @elseif ($pengaduan->status_persetujuan === 'ditolak')
+                                            <span class="text-xs font-semibold text-red-500">✕ Ditolak Pelanggan</span>
+                                        @endif
+                                    @endif
+                                </div>
+                                @if ($pengaduan->status_persetujuan === 'ditolak' && $pengaduan->catatan_persetujuan)
+                                    <p class="text-xs text-slate-500 mt-1.5 italic">Alasan: {{ $pengaduan->catatan_persetujuan }}</p>
+                                @endif
+                                @if ($pengaduan->buktiPembayaranUrl())
+                                    <a href="{{ $pengaduan->buktiPembayaranUrl() }}" target="_blank" rel="noopener"
+                                       class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue mt-2">
+                                        💳 Lihat Bukti Pembayaran ↗
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -113,6 +151,20 @@
                                 @if ($tanggapan->user)
                                     <p class="text-xs text-slate-400 mt-1">oleh {{ $tanggapan->user->name }}</p>
                                 @endif
+                                @if ($tanggapan->jenis_surat && $pengaduan->suratTersedia($tanggapan->jenis_surat))
+                                    <div class="flex flex-wrap items-center gap-3 mt-1.5">
+                                        <a href="/pengaduan/{{ $pengaduan->kode_pengaduan }}/surat/{{ $tanggapan->jenis_surat }}" target="_blank" rel="noopener"
+                                           class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue">
+                                            📄 Lihat {{ $pengaduan->namaSurat($tanggapan->jenis_surat) }} ↗
+                                        </a>
+                                        @if ($pengaduan->linkWhatsapp($tanggapan->jenis_surat))
+                                            <a href="{{ $pengaduan->linkWhatsapp($tanggapan->jenis_surat) }}" target="_blank" rel="noopener"
+                                               class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-green">
+                                                💬 Kirim WA ke Pelanggan
+                                            </a>
+                                        @endif
+                                    </div>
+                                @endif
                                 @if ($tanggapan->fotos->count() > 0)
                                     <div class="flex flex-wrap gap-2 mt-2">
                                         @foreach ($tanggapan->fotos as $foto)
@@ -133,8 +185,9 @@
         @php
             // Deteksi modal mana yang harus otomatis kebuka lagi kalau validasi server gagal
             $errorModal = null;
-            if ($errors->has('petugas_id')) $errorModal = 'pengecekan';
-            elseif ($errors->has('perlu_spkp') || $errors->has('hasil_pemeriksaan')) $errorModal = 'verifikasi';
+            if ($errors->has('petugas_id') || $errors->has('jadwal_pengecekan')) $errorModal = 'pengecekan';
+            elseif ($errors->has('perlu_spkp') || $errors->has('hasil_pemeriksaan') || $errors->has('rincian_biaya_file') || $errors->has('total_biaya')) $errorModal = 'verifikasi';
+            elseif ($errors->has('catatan_verifikasi_pembayaran')) $errorModal = 'tolak-pembayaran';
             elseif ($errors->has('catatan_penolakan')) $errorModal = 'tolak';
             elseif ($errors->has('pelaksana_id')) $errorModal = 'proses';
             elseif ($errors->has('catatan_selesai')) $errorModal = 'selesai';
@@ -143,6 +196,7 @@
         <div class="space-y-5"
              x-data="{
                 activeModal: @js($errorModal),
+                perluSpkp: @js(old('perlu_spkp')),
                 fotoV: [],
                 fotoL: [],
                 addFoto(list, files, refKey) {
@@ -191,23 +245,79 @@
                     </div>
                 </div>
 
+            @elseif ($pengaduan->status === 'menunggu_persetujuan')
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                    <p class="font-display font-semibold text-ink mb-1">⏳ Menunggu Persetujuan Pelanggan</p>
+                    <p class="text-xs text-slate-500 mb-4">Sudah dikirim ke pelanggan lewat halaman Lacak Pengaduan. Tidak ada aksi admin sampai pelanggan merespon.</p>
+                    <div class="bg-white rounded-xl p-3 text-sm">
+                        @if ($pengaduan->rincianBiayaFileUrl())
+                            <a href="{{ $pengaduan->rincianBiayaFileUrl() }}" target="_blank" rel="noopener" class="flex items-center gap-2 text-xs font-semibold text-brand-blue mb-2">
+                                {{ $pengaduan->rincianBiayaFileIcon() }} {{ $pengaduan->rincian_biaya_file_nama_asli ?? 'Dokumen Rincian Biaya' }}
+                            </a>
+                        @endif
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                            <span class="text-xs text-slate-400">Total Biaya</span>
+                            <span class="font-display font-bold text-amber-600">{{ $pengaduan->formattedTotalBiaya() }}</span>
+                        </div>
+                    </div>
+                </div>
+
+            @elseif ($pengaduan->status === 'menunggu_verifikasi_pembayaran')
+                <div class="bg-cyan-50 border border-cyan-200 rounded-2xl p-5">
+                    <p class="font-display font-semibold text-ink mb-1">💳 Verifikasi Bukti Pembayaran</p>
+                    <p class="text-xs text-slate-500 mb-4">Pelanggan sudah setuju & upload bukti bayar. Cek dulu sebelum lanjut.</p>
+
+                    <div class="bg-white rounded-xl p-3 text-sm mb-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs text-slate-400">Total Biaya</span>
+                            <span class="font-display font-bold text-ink">{{ $pengaduan->formattedTotalBiaya() }}</span>
+                        </div>
+                        @if ($pengaduan->buktiPembayaranUrl())
+                            @if ($pengaduan->buktiPembayaranIsGambar())
+                                <img src="{{ $pengaduan->buktiPembayaranUrl() }}" @click="lightboxUrl = '{{ $pengaduan->buktiPembayaranUrl() }}'"
+                                     class="w-full max-h-52 object-contain rounded-lg border border-slate-200 cursor-zoom-in hover:opacity-90 transition bg-slate-50">
+                            @else
+                                <a href="{{ $pengaduan->buktiPembayaranUrl() }}" target="_blank" rel="noopener"
+                                   class="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 transition rounded-lg p-2.5 border border-slate-200">
+                                    <span class="text-xl">📕</span>
+                                    <span class="text-sm text-ink font-medium truncate flex-1">{{ $pengaduan->bukti_pembayaran_nama_asli ?? 'Bukti Pembayaran' }}</span>
+                                    <span class="text-xs text-brand-blue font-semibold shrink-0">Buka ↗</span>
+                                </a>
+                            @endif
+                        @endif
+                    </div>
+
+                    @if (auth()->user()->isAdmin())
+                        <div class="flex gap-2">
+                            <button @click="activeModal = 'konfirmasi-verifikasi-pembayaran'" class="flex-1 h-11 rounded-xl bg-brand-green text-white font-semibold text-sm shadow-lg shadow-brand-green/30 hover:opacity-90 transition">
+                                ✓ Valid, Lanjutkan
+                            </button>
+                            <button @click="activeModal = 'tolak-pembayaran'" class="flex-1 h-11 rounded-xl border border-red-300 text-red-600 font-semibold text-sm hover:bg-red-50 transition">
+                                ✕ Tolak
+                            </button>
+                        </div>
+                    @else
+                        <p class="text-xs text-slate-400 italic">Menunggu admin verifikasi bukti pembayaran.</p>
+                    @endif
+                </div>
+
             @elseif ($pengaduan->status === 'diverifikasi')
                 <div class="bg-white rounded-2xl border border-slate-100 p-5">
                     <p class="font-display font-semibold text-ink mb-1">Langkah Selanjutnya</p>
-                    <p class="text-xs text-slate-500 mb-4">Pengaduan sudah diverifikasi. Tugaskan pekerja untuk mulai perbaikan.</p>
+                    <p class="text-xs text-slate-500 mb-4">Pengaduan sudah diverifikasi. Tugaskan petugas untuk mulai penanganan.</p>
                     @if (auth()->user()->isAdmin())
                         <button @click="activeModal = 'proses'" class="w-full h-11 rounded-xl bg-brand-blue text-white font-semibold text-sm shadow-lg shadow-brand-blue/30 hover:bg-brand-bluelight transition">
                             Lanjut ke Proses
                         </button>
                     @else
-                        <p class="text-xs text-slate-400 italic">Menunggu admin menugaskan pekerja pelaksana.</p>
+                        <p class="text-xs text-slate-400 italic">Menunggu admin menugaskan petugas pelaksana.</p>
                     @endif
                 </div>
 
             @elseif ($pengaduan->status === 'diproses')
                 <div class="bg-white rounded-2xl border border-slate-100 p-5">
-                    <p class="font-display font-semibold text-ink mb-1">Catat Progres Pekerjaan</p>
-                    <p class="text-xs text-slate-500 mb-4">Bisa diisi berkali-kali sampai pekerjaan benar-benar selesai.</p>
+                    <p class="font-display font-semibold text-ink mb-1">Catat Progres Penanganan</p>
+                    <p class="text-xs text-slate-500 mb-4">Bisa diisi berkali-kali sampai penanganan benar-benar selesai.</p>
 
                     <form method="POST" action="/dashboard/pengaduan/{{ $pengaduan->id }}/log-proses" enctype="multipart/form-data" class="space-y-3">
                         @csrf
@@ -264,6 +374,29 @@
                 🖨️ Lihat Surat Pengaduan
             </a>
 
+            @if (count($pengaduan->daftarSuratStatusTersedia()) > 0)
+                <div class="bg-white border border-slate-200 rounded-2xl p-4">
+                    <p class="text-xs font-semibold text-slate-500 mb-2.5">Surat Pemberitahuan Lain</p>
+                    <div class="space-y-2.5">
+                        @foreach ($pengaduan->daftarSuratStatusTersedia() as $jenisSurat => $namaSurat)
+                            <div class="flex items-center justify-between gap-2">
+                                <a href="/pengaduan/{{ $pengaduan->kode_pengaduan }}/surat/{{ $jenisSurat }}" target="_blank"
+                                   class="flex items-center gap-2 text-sm text-slate-600 hover:text-brand-blue transition min-w-0">
+                                    📄 <span class="truncate">{{ $namaSurat }}</span>
+                                </a>
+                                @if ($pengaduan->linkWhatsapp($jenisSurat))
+                                    <a href="{{ $pengaduan->linkWhatsapp($jenisSurat) }}" target="_blank" rel="noopener"
+                                       title="Kirim notifikasi WA ke pelanggan"
+                                       class="shrink-0 text-xs font-semibold text-brand-green border border-brand-green/30 rounded-full px-2.5 py-1 hover:bg-brand-green/5 transition">
+                                        💬 WA
+                                    </a>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             {{-- ===== MODAL-MODAL ===== --}}
             <div x-show="activeModal !== null" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
                 <div class="absolute inset-0 bg-black/40" @click="activeModal = null"></div>
@@ -274,13 +407,19 @@
                     <p class="text-sm text-slate-500 mb-4">Pilih petugas yang akan turun ke lokasi.</p>
                     <form method="POST" action="/dashboard/pengaduan/{{ $pengaduan->id }}/mulai-pengecekan">
                         @csrf
-                        <select name="petugas_id" class="w-full h-11 rounded-xl border {{ $errors->has('petugas_id') ? 'border-red-400' : 'border-slate-200' }} px-3 text-sm mb-1 bg-white focus:ring-2 focus:ring-brand-blue outline-none">
+                        <select name="petugas_id" class="w-full h-11 rounded-xl border {{ $errors->has('petugas_id') ? 'border-red-400' : 'border-slate-200' }} px-3 text-sm mb-3 bg-white focus:ring-2 focus:ring-brand-blue outline-none">
                             <option value="" disabled selected>Pilih petugas</option>
                             @foreach ($petugasList as $petugas)
                                 <option value="{{ $petugas->id }}" {{ old('petugas_id') == $petugas->id ? 'selected' : '' }}>{{ $petugas->name }}</option>
                             @endforeach
                         </select>
                         @error('petugas_id')<p class="text-red-500 text-xs mb-3">{{ $message }}</p>@enderror
+
+                        <label class="block text-sm font-medium text-ink mb-1.5">Jadwal Rencana Pengecekan</label>
+                        <input type="datetime-local" name="jadwal_pengecekan" value="{{ old('jadwal_pengecekan') }}"
+                               class="w-full h-11 rounded-xl border {{ $errors->has('jadwal_pengecekan') ? 'border-red-400' : 'border-slate-200' }} px-3 text-sm mb-1 bg-white focus:ring-2 focus:ring-brand-blue outline-none">
+                        @error('jadwal_pengecekan')<p class="text-red-500 text-xs mb-3">{{ $message }}</p>@enderror
+                        <p class="text-xs text-slate-400 mb-3">Akan dicantumkan di Surat Pemberitahuan Pengecekan yang bisa dilihat pelanggan.</p>
                         <div class="flex gap-2 mt-3">
                             <button type="button" @click="activeModal = null" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Batal</button>
                             <button type="submit" class="flex-1 h-11 rounded-xl bg-brand-blue text-white text-sm font-semibold hover:bg-brand-bluelight transition">Mulai Pengecekan</button>
@@ -297,8 +436,8 @@
                         <div>
                             <label class="block text-sm font-medium text-ink mb-1.5">Perlu SPKP?</label>
                             <div class="flex gap-3">
-                                <label class="flex items-center gap-2 text-sm"><input type="radio" name="perlu_spkp" value="ya" class="accent-brand-blue" {{ old('perlu_spkp') === 'ya' ? 'checked' : '' }}> Ya</label>
-                                <label class="flex items-center gap-2 text-sm"><input type="radio" name="perlu_spkp" value="tidak" class="accent-brand-blue" {{ old('perlu_spkp') === 'tidak' ? 'checked' : '' }}> Tidak</label>
+                                <label class="flex items-center gap-2 text-sm"><input type="radio" name="perlu_spkp" value="ya" x-model="perluSpkp" class="accent-brand-blue"> Ya</label>
+                                <label class="flex items-center gap-2 text-sm"><input type="radio" name="perlu_spkp" value="tidak" x-model="perluSpkp" class="accent-brand-blue"> Tidak</label>
                             </div>
                             @error('perlu_spkp')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
@@ -307,6 +446,32 @@
                             <textarea name="hasil_pemeriksaan" rows="3" placeholder="Ceritakan temuan di lokasi..."
                                       class="w-full rounded-xl border {{ $errors->has('hasil_pemeriksaan') ? 'border-red-400' : 'border-slate-200' }} px-4 py-3 text-sm resize-none focus:ring-2 focus:ring-brand-blue outline-none">{{ old('hasil_pemeriksaan') }}</textarea>
                             @error('hasil_pemeriksaan')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                        </div>
+
+                        {{-- Section biaya — cuma muncul kalau perlu SPKP. Isi total_biaya > 0 --}}
+                        {{-- akan otomatis bikin pengaduan menunggu persetujuan pelanggan dulu. --}}
+                        <div x-show="perluSpkp === 'ya'" x-cloak class="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-3">
+                            <p class="text-xs text-amber-700 leading-relaxed">
+                                Kalau penanganan pengaduan ini butuh biaya, isi rincian & nominalnya. Pengaduan akan
+                                <span class="font-semibold">menunggu persetujuan pelanggan</span> dulu sebelum lanjut.
+                                Kosongkan kalau tidak ada biaya / gratis.
+                            </p>
+                            <div>
+                                <label class="block text-sm font-medium text-ink mb-1.5">Dokumen Rincian Biaya <span class="text-slate-400 font-normal text-xs">— Word / Excel / PDF</span></label>
+                                <input type="file" name="rincian_biaya_file" accept=".doc,.docx,.xls,.xlsx,.pdf"
+                                       class="w-full text-sm rounded-xl border {{ $errors->has('rincian_biaya_file') ? 'border-red-400' : 'border-slate-200' }} px-3 py-2.5 bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-brand-blue/10 file:text-brand-blue file:text-xs file:font-semibold">
+                                @error('rincian_biaya_file')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                                <p class="text-xs text-slate-400 mt-1">Wajib diisi kalau Total Biaya di bawah diisi lebih dari 0.</p>
+                                @if ($errors->any())
+                                    <p class="text-xs text-amber-600 mt-1">⚠️ Kalau tadi sudah pilih file, mohon pilih ulang — file gak ikut tersimpan otomatis saat ada error di form (keterbatasan browser).</p>
+                                @endif
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-ink mb-1.5">Total Biaya (Rp) <span class="text-slate-400 font-normal text-xs">— opsional</span></label>
+                                <input type="number" name="total_biaya" min="0" step="1" value="{{ old('total_biaya') }}" placeholder="Contoh: 150000 atau 345233"
+                                       class="w-full h-11 rounded-xl border {{ $errors->has('total_biaya') ? 'border-red-400' : 'border-slate-200' }} px-4 text-sm focus:ring-2 focus:ring-brand-blue outline-none bg-white">
+                                @error('total_biaya')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-ink mb-1.5">Foto Pengecekan <span class="text-slate-400 font-normal text-xs">— opsional</span></label>
@@ -323,6 +488,11 @@
                                     </div>
                                 </template>
                             </div>
+                            @error('foto_pengecekan')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                            @error('foto_pengecekan.*')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                            @if ($errors->has('perlu_spkp') || $errors->has('hasil_pemeriksaan') || $errors->has('rincian_biaya_file') || $errors->has('total_biaya'))
+                                <p class="text-xs text-amber-600 mt-1">⚠️ Kalau tadi sudah pilih foto, mohon pilih ulang — file gak ikut tersimpan otomatis saat ada error di form (keterbatasan browser).</p>
+                            @endif
                         </div>
                         <div class="flex gap-2 pt-2">
                             <button type="button" @click="activeModal = null" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Batal</button>
@@ -347,14 +517,48 @@
                     </form>
                 </div>
 
+                {{-- Modal: Konfirmasi Verifikasi Pembayaran --}}
+                <div x-show="activeModal === 'konfirmasi-verifikasi-pembayaran'" class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" style="display:none">
+                    <div class="w-11 h-11 rounded-full bg-brand-green/10 flex items-center justify-center mb-3">
+                        <span class="text-xl">✓</span>
+                    </div>
+                    <p class="font-display font-bold text-lg text-ink mb-1.5">Konfirmasi Pembayaran</p>
+                    <p class="text-sm text-slate-500 mb-5 leading-relaxed">
+                        Pastikan bukti pembayaran di atas sudah benar dan sesuai. Pengaduan akan dilanjutkan ke tahap verifikasi setelah ini.
+                    </p>
+                    <form method="POST" action="/dashboard/pengaduan/{{ $pengaduan->id }}/verifikasi-pembayaran">
+                        @csrf
+                        <div class="flex gap-2">
+                            <button type="button" @click="activeModal = null" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Batal</button>
+                            <button type="submit" class="flex-1 h-11 rounded-xl bg-brand-green text-white text-sm font-semibold hover:opacity-90 transition">Ya, Lanjutkan</button>
+                        </div>
+                    </form>
+                </div>
+
+                {{-- Modal: Tolak Bukti Pembayaran --}}
+                <div x-show="activeModal === 'tolak-pembayaran'" class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6" style="display:none">
+                    <p class="font-display font-bold text-lg text-ink mb-1">Tolak Bukti Pembayaran</p>
+                    <p class="text-sm text-slate-500 mb-4">Jelaskan alasannya — pelanggan akan diminta upload ulang.</p>
+                    <form method="POST" action="/dashboard/pengaduan/{{ $pengaduan->id }}/tolak-pembayaran">
+                        @csrf
+                        <textarea name="catatan_verifikasi_pembayaran" rows="4" placeholder="Contoh: Nominal transfer tidak sesuai dengan total biaya yang disepakati."
+                                  class="w-full rounded-xl border {{ $errors->has('catatan_verifikasi_pembayaran') ? 'border-red-400' : 'border-slate-200' }} px-4 py-3 text-sm resize-none mb-1 focus:ring-2 focus:ring-brand-blue outline-none">{{ old('catatan_verifikasi_pembayaran') }}</textarea>
+                        @error('catatan_verifikasi_pembayaran')<p class="text-red-500 text-xs mb-3">{{ $message }}</p>@enderror
+                        <div class="flex gap-2 mt-3">
+                            <button type="button" @click="activeModal = null" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Batal</button>
+                            <button type="submit" class="flex-1 h-11 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition">Tolak Bukti Bayar</button>
+                        </div>
+                    </form>
+                </div>
+
                 {{-- Modal: Mulai Proses --}}
                 <div x-show="activeModal === 'proses'" class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6" style="display:none">
                     <p class="font-display font-bold text-lg text-ink mb-1">Lanjut ke Proses</p>
-                    <p class="text-sm text-slate-500 mb-4">Pilih pekerja yang akan melakukan perbaikan.</p>
+                    <p class="text-sm text-slate-500 mb-4">Pilih petugas yang akan menindaklanjuti pengaduan ini.</p>
                     <form method="POST" action="/dashboard/pengaduan/{{ $pengaduan->id }}/mulai-proses">
                         @csrf
                         <select name="pelaksana_id" class="w-full h-11 rounded-xl border {{ $errors->has('pelaksana_id') ? 'border-red-400' : 'border-slate-200' }} px-3 text-sm mb-1 bg-white focus:ring-2 focus:ring-brand-blue outline-none">
-                            <option value="" disabled selected>Pilih pekerja</option>
+                            <option value="" disabled selected>Pilih petugas</option>
                             @foreach ($petugasList as $petugas)
                                 <option value="{{ $petugas->id }}" {{ old('pelaksana_id') == $petugas->id ? 'selected' : '' }}>{{ $petugas->name }}</option>
                             @endforeach
@@ -373,7 +577,7 @@
                     <p class="text-sm text-slate-500 mb-4">Tulis catatan penutup untuk pelanggan.</p>
                     <form method="POST" action="/dashboard/pengaduan/{{ $pengaduan->id }}/selesai">
                         @csrf
-                        <textarea name="catatan_selesai" rows="4" placeholder="Contoh: Perbaikan pipa telah selesai dilakukan, air sudah mengalir normal kembali."
+                        <textarea name="catatan_selesai" rows="4" placeholder="Contoh: Kendala pelanggan sudah kami tangani dan dinyatakan selesai."
                                   class="w-full rounded-xl border {{ $errors->has('catatan_selesai') ? 'border-red-400' : 'border-slate-200' }} px-4 py-3 text-sm resize-none mb-1 focus:ring-2 focus:ring-brand-blue outline-none">{{ old('catatan_selesai') }}</textarea>
                         @error('catatan_selesai')<p class="text-red-500 text-xs mb-3">{{ $message }}</p>@enderror
                         <div class="flex gap-2 mt-3">

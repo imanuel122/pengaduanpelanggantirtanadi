@@ -13,9 +13,10 @@ class PengaduanFoto extends Model
         return $this->belongsTo(Pengaduan::class);
     }
 
-    // URL publik foto (disk 'public' -> butuh php artisan storage:link)
+    // URL publik foto. Sengaja pakai path relatif ('/storage/...') bukan asset()/APP_URL,
+    // supaya tetap benar walau domain lokal (.test) berubah-ubah dan APP_URL di .env lupa disesuaikan.
     public function url(): string
     {
-        return asset('storage/' . $this->path);
+        return '/storage/' . $this->path;
     }
 }
