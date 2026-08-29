@@ -14,10 +14,12 @@ class TanggapanPengaduan extends Model
         'pesan',
         'status_baru',
         'jenis_surat',
+        'edited_at',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
+        'edited_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -41,6 +43,20 @@ class TanggapanPengaduan extends Model
     public function fotos()
     {
         return $this->hasMany(TanggapanFoto::class);
+    }
+
+    // Cuma catatan progres bebas (bukan entri resmi perubahan status/surat) yang
+    // boleh diedit -- supaya riwayat status resmi & surat yang sudah terbit tetap
+    // jadi catatan yang utuh. Penulis aslinya atau admin yang boleh mengedit.
+    public function bolehDiedit(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $catatanProgresBebas = is_null($this->status_baru) && is_null($this->jenis_surat);
+
+        return $catatanProgresBebas && ($user->id === $this->user_id || $user->isAdmin());
     }
 
     // Warna titik timeline di halaman Lacak Pengaduan, tergantung status_baru saat itu

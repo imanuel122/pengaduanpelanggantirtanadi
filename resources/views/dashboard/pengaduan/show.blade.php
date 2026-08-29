@@ -8,7 +8,7 @@
         ← Kembali ke daftar pengaduan
     </a>
 
-    <div class="grid lg:grid-cols-3 gap-5" x-data="{ lightboxUrl: null }">
+    <div class="grid lg:grid-cols-3 gap-5" x-data="{ lightboxUrl: null, editTanggapanId: @js(old('_editing_tanggapan_id') ? (int) old('_editing_tanggapan_id') : null) }">
 
         {{-- ===== KOLOM KIRI: INFO PENGADUAN ===== --}}
         <div class="lg:col-span-2 space-y-5">
@@ -146,7 +146,12 @@
                                 @endif
                             </div>
                             <div class="pb-6 flex-1">
-                                <p class="text-xs text-slate-400">{{ $tanggapan->created_at->translatedFormat('d F Y, H:i') }} WIB</p>
+                                <p class="text-xs text-slate-400">
+                                    {{ $tanggapan->created_at->translatedFormat('d F Y, H:i') }} WIB
+                                    @if ($tanggapan->edited_at)
+                                        <span class="italic">&middot; diedit {{ $tanggapan->edited_at->translatedFormat('d F Y, H:i') }}</span>
+                                    @endif
+                                </p>
                                 <p class="text-sm text-ink mt-1 leading-relaxed break-words">{{ $tanggapan->pesan }}</p>
                                 @if ($tanggapan->user)
                                     <p class="text-xs text-slate-400 mt-1">oleh {{ $tanggapan->user->name }}</p>
@@ -172,6 +177,103 @@
                                                  class="h-20 w-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition cursor-zoom-in">
                                         @endforeach
                                     </div>
+                                @endif
+
+                                @if ($tanggapan->bolehDiedit(auth()->user()))
+                                    <button type="button" @click="editTanggapanId = {{ $tanggapan->id }}"
+                                            class="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-brand-blue transition mt-2">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                        Edit catatan ini
+                                    </button>
+
+                                    {{-- Modal edit -- x-data lokal per entri, khusus buat kelola preview foto baru --}}
+                                    <template x-teleport="body">
+                                        <div x-show="editTanggapanId === {{ $tanggapan->id }}" x-transition
+                                             class="fixed inset-0 z-[90] flex items-center justify-center p-4" style="display:none"
+                                             x-data="{
+                                                fotoBaru: [],
+                                                hapusFotoIds: [],
+                                                get totalFotoAkhir() {
+                                                    return ({{ $tanggapan->fotos->count() }} - this.hapusFotoIds.length) + this.fotoBaru.length;
+                                                },
+                                                addFotoBaru(files) {
+                                                    const arr = Array.from(files || []);
+                                                    if (arr.length === 0) return;
+                                                    if (this.totalFotoAkhir + arr.length > 6) { alert('Maksimal 6 foto (foto lama yang dipertahankan + foto baru digabung).'); return; }
+                                                    arr.forEach((f) => this.fotoBaru.push({ file: f, previewUrl: URL.createObjectURL(f) }));
+                                                    this.syncInput();
+                                                },
+                                                removeFotoBaru(index) {
+                                                    this.fotoBaru.splice(index, 1);
+                                                    this.syncInput();
+                                                },
+                                                syncInput() {
+                                                    const dt = new DataTransfer();
+                                                    this.fotoBaru.forEach((item) => dt.items.add(item.file));
+                                                    this.$refs.fotoBaruInput.files = dt.files;
+                                                }
+                                             }">
+                                            <div class="absolute inset-0 bg-black/40" @click="editTanggapanId = null"></div>
+                                            <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+                                                <p class="font-display font-bold text-lg text-ink mb-1">Edit Catatan Progres</p>
+                                                <p class="text-sm text-slate-500 mb-4">Perbaiki isi pesan atau foto kalau ada salah ketik / salah unggah.</p>
+
+                                                <form method="POST" action="/dashboard/pengaduan/{{ $pengaduan->id }}/tanggapan/{{ $tanggapan->id }}" enctype="multipart/form-data">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <input type="hidden" name="_editing_tanggapan_id" value="{{ $tanggapan->id }}">
+
+                                                    <label class="block text-sm font-medium text-ink mb-1.5">Isi Pesan</label>
+                                                    <textarea name="pesan" rows="3" required
+                                                              class="w-full rounded-xl border {{ old('_editing_tanggapan_id') == $tanggapan->id && $errors->has('pesan') ? 'border-red-400' : 'border-slate-200' }} px-4 py-3 text-sm focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition resize-none">{{ old('_editing_tanggapan_id') == $tanggapan->id ? old('pesan') : $tanggapan->pesan }}</textarea>
+                                                    @if (old('_editing_tanggapan_id') == $tanggapan->id)
+                                                        @error('pesan')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                                                        @error('foto_baru')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                                                    @endif
+                                                    <div class="mb-4"></div>
+
+                                                    @if ($tanggapan->fotos->count() > 0)
+                                                        <label class="block text-sm font-medium text-ink mb-1.5">Foto Saat Ini <span class="text-slate-400 font-normal text-xs">— klik ✕ buat menghapus</span></label>
+                                                        <div class="grid grid-cols-4 gap-2 mb-4">
+                                                            @foreach ($tanggapan->fotos as $foto)
+                                                                <label class="relative block cursor-pointer group">
+                                                                    <input type="checkbox" name="hapus_foto[]" value="{{ $foto->id }}" x-model.number="hapusFotoIds" class="peer hidden">
+                                                                    <img src="{{ $foto->url() }}" class="w-full h-16 object-cover rounded-lg border border-slate-200 peer-checked:opacity-30 peer-checked:grayscale transition">
+                                                                    <span class="absolute inset-0 hidden peer-checked:flex items-center justify-center bg-red-500/70 text-white text-[10px] font-bold rounded-lg pointer-events-none">Dihapus</span>
+                                                                    <span class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-[10px] shadow-md group-hover:border-red-300 pointer-events-none">✕</span>
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+
+                                                    <label class="block text-sm font-medium text-ink mb-1.5">Tambah Foto Baru <span class="text-slate-400 font-normal text-xs">— opsional</span></label>
+                                                    <div class="border-2 border-dashed border-slate-200 rounded-xl p-3 text-center mb-2"
+                                                         @drop.prevent="addFotoBaru($event.dataTransfer.files)" @dragover.prevent>
+                                                        <button type="button" @click="$refs.fotoBaruInput.click()" class="text-xs font-semibold text-brand-blue border border-brand-blue/30 rounded-full px-4 py-1.5 hover:bg-brand-blue/5 transition">
+                                                            + Tambah Foto
+                                                        </button>
+                                                        <input type="file" name="foto_baru[]" x-ref="fotoBaruInput" multiple accept="image/jpeg,image/jpg,image/png" class="hidden"
+                                                               @change="addFotoBaru($event.target.files)">
+                                                    </div>
+                                                    <div class="grid grid-cols-4 gap-2 mb-4" x-show="fotoBaru.length > 0">
+                                                        <template x-for="(item, index) in fotoBaru" :key="index">
+                                                            <div class="relative">
+                                                                <img :src="item.previewUrl" @click="lightboxUrl = item.previewUrl"
+                                                                     class="w-full h-16 object-cover rounded-lg border border-slate-200 cursor-zoom-in hover:opacity-80 transition">
+                                                                <button type="button" @click="removeFotoBaru(index)"
+                                                                        class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-md hover:bg-red-600 transition">✕</button>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+
+                                                    <div class="flex gap-2">
+                                                        <button type="button" @click="editTanggapanId = null" class="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Batal</button>
+                                                        <button type="submit" class="flex-1 h-11 rounded-xl bg-brand-blue text-white text-sm font-semibold hover:bg-brand-bluelight transition">Simpan Perubahan</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </template>
                                 @endif
                             </div>
                         </div>

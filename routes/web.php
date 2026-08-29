@@ -79,5 +79,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/pengaduan/{pengaduan}/tolak', [DashboardPengaduanController::class, 'tolak']);
     Route::post('/dashboard/pengaduan/{pengaduan}/mulai-proses', [DashboardPengaduanController::class, 'mulaiProses']);
     Route::post('/dashboard/pengaduan/{pengaduan}/log-proses', [DashboardPengaduanController::class, 'logProses']);
+    Route::put('/dashboard/pengaduan/{pengaduan}/tanggapan/{tanggapan}', [DashboardPengaduanController::class, 'updateTanggapan']);
     Route::post('/dashboard/pengaduan/{pengaduan}/selesai', [DashboardPengaduanController::class, 'selesai']);
 });

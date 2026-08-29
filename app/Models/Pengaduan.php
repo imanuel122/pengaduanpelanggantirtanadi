@@ -440,6 +440,17 @@ class Pengaduan extends Model
         $kategori = $this->kategori->nama ?? 'pengaduan Anda';
         $adaBiaya = !is_null($this->total_biaya) && (float) $this->total_biaya > 0;
 
+        // ===== DISCLAIMER PROJECT (paling atas, sebelum pembuka resmi) =====
+        // Sistem ini masih tugas/project, BUKAN sistem resmi PDAM Tirtanadi yang
+        // sungguhan dipakai publik. Disclaimer ini WAJIB ada supaya kalau pesan ini
+        // ke-kirim ke nomor yang salah, penerimanya gak salah paham dan menganggap
+        // ini pesan resmi dari perusahaan.
+        // Sengaja TANPA emoji (mis. ⚠️) karena beberapa emoji bisa tampil sebagai
+        // kotak/karakter aneh di WhatsApp Web tergantung encoding perangkat --
+        // dipakai *tebal* + huruf kapital biar tetap mencolok tanpa emoji.
+        $disclaimer = "*[PESAN DEMO/TUGAS PROJECT - BUKAN PESAN RESMI PDAM TIRTANADI]*"
+            . "\n_Mohon abaikan jika Anda menerima pesan ini secara tidak sengaja._";
+
         // ===== PEMBUKA (sama untuk semua jenis surat) =====
         $pembuka = "Yth. Bapak/Ibu *{$this->nama_pelapor}*,"
             . "\n\nKami dari *PERUMDA Tirtanadi Cabang Padang Bulan* ingin menyampaikan informasi terbaru mengenai pengaduan Anda (No. *{$this->kode_pengaduan}*) perihal *{$kategori}*.";
@@ -500,7 +511,7 @@ class Pengaduan extends Model
         $penutup = 'Demikian informasi yang dapat kami sampaikan. Atas perhatian dan kepercayaan Bapak/Ibu kepada kami, kami ucapkan terima kasih.'
             . "\n\nHormat kami,\n*PERUMDA Tirtanadi Cabang Padang Bulan*";
 
-        return "{$pembuka}\n\n{$isi}\n\n{$blokLink}\n\n{$penutup}";
+        return "{$disclaimer}\n\n{$pembuka}\n\n{$isi}\n\n{$blokLink}\n\n{$penutup}";
     }
 
     // Link wa.me siap-klik: buka WhatsApp dengan nomor & pesan yang sudah terisi otomatis

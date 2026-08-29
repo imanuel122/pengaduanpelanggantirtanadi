@@ -22,19 +22,41 @@
             Lacak Pengaduan Anda
         </h1>
         <p class="text-slate-600 mt-2 text-sm sm:text-base max-w-xl">
-            Masukkan nomor pengaduan yang Anda terima saat mengirim laporan
-            untuk melihat perkembangan penanganannya.
+            Cari pakai nomor pengaduan yang Anda terima saat mengirim laporan,
+            atau cari pakai nama, nomor HP, atau nomor pelanggan (NPA) Anda
+            untuk melihat semua pengaduan yang pernah dibuat.
         </p>
     </div>
 
-    {{-- Form pencarian --}}
-    <form method="GET" action="/lacak" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row gap-3">
-        <input type="text" name="kode" value="{{ $kodeDicari }}" placeholder="Contoh: PGD-20260818-00001"
-               class="flex-1 h-12 rounded-xl border border-slate-200 px-4 text-sm focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition uppercase placeholder:normal-case">
-        <button type="submit" class="inline-flex items-center justify-center gap-2 bg-brand-blue text-white font-semibold rounded-xl px-6 py-3 shadow-lg shadow-brand-blue/30 hover:bg-brand-bluelight transition text-sm">
-            🔍 Lacak
-        </button>
-    </form>
+    {{-- Form pencarian, dengan 2 tab: nomor pengaduan / nama-hp-npa --}}
+    <div x-data="{ mode: @js($cariDicari !== '' ? 'cari' : 'kode') }">
+        <div class="flex gap-1 mb-3 border-b border-slate-200">
+            <button type="button" @click="mode = 'kode'"
+                    class="px-4 py-2.5 text-sm font-semibold transition"
+                    :class="mode === 'kode' ? 'text-brand-blue border-b-2 border-brand-blue' : 'text-slate-500 hover:text-brand-blue border-b-2 border-transparent'">
+                Nomor Pengaduan
+            </button>
+            <button type="button" @click="mode = 'cari'"
+                    class="px-4 py-2.5 text-sm font-semibold transition"
+                    :class="mode === 'cari' ? 'text-brand-blue border-b-2 border-brand-blue' : 'text-slate-500 hover:text-brand-blue border-b-2 border-transparent'">
+                Nama / No HP / NPA
+            </button>
+        </div>
+
+        <form method="GET" action="/lacak" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row gap-3">
+            <template x-if="mode === 'kode'">
+                <input type="text" name="kode" value="{{ $kodeDicari }}" placeholder="Contoh: PGD-20260818-00001"
+                       class="flex-1 h-12 rounded-xl border border-slate-200 px-4 text-sm focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition uppercase placeholder:normal-case">
+            </template>
+            <template x-if="mode === 'cari'">
+                <input type="text" name="cari" value="{{ $cariDicari }}" placeholder="Contoh: Imanuel Hulu / 0812xxxxxxx / NPA1234"
+                       class="flex-1 h-12 rounded-xl border border-slate-200 px-4 text-sm focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition">
+            </template>
+            <button type="submit" class="inline-flex items-center justify-center gap-2 bg-brand-blue text-white font-semibold rounded-xl px-6 py-3 shadow-lg shadow-brand-blue/30 hover:bg-brand-bluelight transition text-sm">
+                🔍 Lacak
+            </button>
+        </form>
+    </div>
 
     {{-- ===== STATE: BELUM MENCARI APAPUN ===== --}}
     @if (!$sudahDicari)
@@ -42,15 +64,16 @@
             <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-blue/10 flex items-center justify-center mx-auto mb-5">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0B6FB4" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
             </div>
-            <p class="font-display font-semibold text-ink">Masukkan nomor pengaduan Anda</p>
+            <p class="font-display font-semibold text-ink">Masukkan nomor pengaduan, nama, no HP, atau NPA Anda</p>
             <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
                 Nomor pengaduan bisa Anda temukan di halaman sukses setelah mengirim
-                laporan, atau di surat pengaduan yang sudah dicetak.
+                laporan, atau di surat pengaduan yang sudah dicetak. Belum ingat nomornya?
+                Cari saja pakai nama, no HP, atau NPA yang dipakai saat melapor.
             </p>
         </div>
 
-    {{-- ===== STATE: DICARI TAPI TIDAK KETEMU ===== --}}
-    @elseif (!$pengaduan)
+    {{-- ===== STATE: DICARI PAKAI NOMOR PENGADUAN, TAPI TIDAK KETEMU ===== --}}
+    @elseif ($kodeDicari !== '' && !$pengaduan)
         <div class="text-center py-16 sm:py-20">
             <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
@@ -63,7 +86,49 @@
             </p>
         </div>
 
-    {{-- ===== STATE: KETEMU ===== --}}
+    {{-- ===== STATE: DICARI PAKAI NAMA/NO HP/NPA -- DAFTAR HASIL ===== --}}
+    @elseif ($cariDicari !== '')
+        @if ($hasilPencarian->isEmpty())
+            <div class="text-center py-16 sm:py-20">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                </div>
+                <p class="font-display font-semibold text-ink">Tidak ada pengaduan yang ditemukan</p>
+                <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+                    Tidak ada pengaduan dengan nama, no HP, atau NPA
+                    <span class="font-semibold text-ink">{{ $cariDicari }}</span>.
+                    Pastikan penulisannya sama seperti saat Anda melapor.
+                </p>
+            </div>
+        @else
+            <div class="mt-8">
+                <p class="text-sm text-slate-500 mb-4">
+                    Ditemukan <span class="font-semibold text-ink">{{ $hasilPencarian->count() }}</span>
+                    pengaduan untuk "<span class="font-semibold text-ink">{{ $cariDicari }}</span>". Pilih salah satu untuk lihat detail & riwayat progresnya.
+                </p>
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden divide-y divide-slate-50">
+                    @foreach ($hasilPencarian as $item)
+                        <a href="/lacak?kode={{ $item->kode_pengaduan }}&dari_cari={{ urlencode($cariDicari) }}" class="flex items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50 transition">
+                            <div class="min-w-0">
+                                <p class="font-display font-semibold text-brand-blue text-sm tracking-wide">{{ $item->kode_pengaduan }}</p>
+                                <p class="text-sm text-ink font-medium mt-0.5 truncate">{{ $item->judul }}</p>
+                                <p class="text-xs text-slate-400 mt-0.5">
+                                    {{ $item->nama_pelapor }} &middot; {{ $item->kategori->nama ?? '-' }} &middot; {{ $item->created_at->translatedFormat('d F Y') }}
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold {{ $item->statusColor() }}">
+                                    {{ $item->statusLabel() }}
+                                </span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300"><path d="M9 18l6-6-6-6"/></svg>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+    {{-- ===== STATE: KETEMU (via nomor pengaduan) ===== --}}
     @else
         <div class="mt-8 space-y-6" x-data="{ lightboxUrl: null, tolakOpen: false, confirmSetuju: false }">
 
@@ -363,9 +428,15 @@
             </div>
 
             <div class="text-center">
-                <a href="/lacak" class="text-sm font-semibold text-slate-500 hover:text-brand-blue transition">
-                    ← Lacak pengaduan lain
-                </a>
+                @if (request()->query('dari_cari'))
+                    <a href="/lacak?cari={{ urlencode(request()->query('dari_cari')) }}" class="text-sm font-semibold text-slate-500 hover:text-brand-blue transition">
+                        ← Kembali ke hasil pencarian
+                    </a>
+                @else
+                    <a href="/lacak" class="text-sm font-semibold text-slate-500 hover:text-brand-blue transition">
+                        ← Lacak pengaduan lain
+                    </a>
+                @endif
             </div>
 
             {{-- Lightbox: klik foto untuk lihat ukuran penuh --}}

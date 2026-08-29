@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengaduan;
+use App\Models\TanggapanPengaduan;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class PengaduanController extends Controller
 {
@@ -346,6 +349,56 @@ class PengaduanController extends Controller
         }
 
         return back()->with('success', 'Progres penanganan berhasil dicatat.');
+    }
+
+    // Edit catatan progres yang SUDAH ADA -- buat perbaiki typo pesan atau salah
+    // unggah foto. Sengaja dibatasi hanya untuk catatan progres bebas (bukan entri
+    // resmi perubahan status/surat), dan cuma penulis aslinya atau admin yang boleh.
+    public function updateTanggapan(Request $request, Pengaduan $pengaduan, TanggapanPengaduan $tanggapan)
+    {
+        abort_unless($tanggapan->pengaduan_id === $pengaduan->id, 404);
+        abort_unless($tanggapan->bolehDiedit(auth()->user()), 403, 'Catatan ini tidak bisa diedit di sini.');
+
+        $validated = $request->validate([
+            'pesan' => ['required', 'string', 'min:5'],
+            'hapus_foto' => ['nullable', 'array'],
+            'hapus_foto.*' => ['integer', Rule::exists('tanggapan_fotos', 'id')->where('tanggapan_pengaduan_id', $tanggapan->id)],
+            'foto_baru' => ['nullable', 'array'],
+            'foto_baru.*' => ['image', 'mimes:jpg,jpeg,png', 'max:5120'],
+        ], [
+            'pesan.required' => 'Isi pesan wajib diisi.',
+            'pesan.min' => 'Isi pesan minimal 5 karakter.',
+            'foto_baru.*.image' => 'File yang diunggah harus berupa gambar.',
+            'foto_baru.*.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
+            'foto_baru.*.max' => 'Ukuran tiap foto maksimal 5MB.',
+        ]);
+
+        $jumlahDihapus = count($validated['hapus_foto'] ?? []);
+        $jumlahBaru = count($validated['foto_baru'] ?? []);
+        $sisaAkhir = $tanggapan->fotos()->count() - $jumlahDihapus + $jumlahBaru;
+
+        if ($sisaAkhir > 6) {
+            return back()->withErrors(['foto_baru' => 'Total foto (yang dipertahankan + foto baru) maksimal 6.'])->withInput();
+        }
+
+        if (!empty($validated['hapus_foto'])) {
+            foreach ($tanggapan->fotos()->whereIn('id', $validated['hapus_foto'])->get() as $foto) {
+                Storage::disk('public')->delete($foto->path);
+                $foto->delete();
+            }
+        }
+
+        foreach ($validated['foto_baru'] ?? [] as $file) {
+            $path = $file->store('dokumentasi', 'public');
+            $tanggapan->fotos()->create(['path' => $path]);
+        }
+
+        $tanggapan->update([
+            'pesan' => $validated['pesan'],
+            'edited_at' => now(),
+        ]);
+
+        return back()->with('success', 'Catatan progres berhasil diperbarui.');
     }
 
     // DIPROSES -> SELESAI (isi catatan penyelesaian buat pelanggan)

@@ -83,18 +83,41 @@ class PengaduanController extends Controller
     public function lacak(Request $request)
     {
         $kode = trim((string) $request->query('kode', ''));
-        $pengaduan = null;
-        $sudahDicari = $kode !== '';
+        $cari = trim((string) $request->query('cari', ''));
 
-        if ($sudahDicari) {
+        $pengaduan = null;
+        $hasilPencarian = null; // banyak hasil kalau nyari pakai nama/no HP/NPA
+        $sudahDicari = $kode !== '' || $cari !== '';
+
+        if ($kode !== '') {
             $pengaduan = Pengaduan::with(['kategori', 'petugas', 'fotos', 'tanggapans.fotos'])
                 ->where('kode_pengaduan', $kode)
                 ->first();
+        } elseif ($cari !== '') {
+            // Nomor HP disimpan dalam format yang bisa beda-beda (0812..., 62812..., +62812...),
+            // jadi bagian kode negara/nol di depan dibuang dulu sebelum dicocokkan, supaya
+            // pelanggan tetap ketemu hasilnya walau ngetik formatnya beda dari yang tersimpan.
+            $nomorMentah = preg_replace('/\D/', '', $cari);
+            $nomorInti = preg_replace('/^(0|62)/', '', $nomorMentah);
+
+            $hasilPencarian = Pengaduan::with('kategori')
+                ->where(function ($q) use ($cari, $nomorInti) {
+                    $q->where('nama_pelapor', 'like', "%{$cari}%")
+                        ->orWhere('no_pelanggan', 'like', "%{$cari}%");
+
+                    if (strlen($nomorInti) >= 6) {
+                        $q->orWhere('no_hp', 'like', "%{$nomorInti}%");
+                    }
+                })
+                ->latest()
+                ->get();
         }
 
         return view('pengaduan.lacak', [
             'pengaduan' => $pengaduan,
             'kodeDicari' => $kode,
+            'cariDicari' => $cari,
+            'hasilPencarian' => $hasilPencarian,
             'sudahDicari' => $sudahDicari,
         ]);
     }
